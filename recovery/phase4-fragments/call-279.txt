@@ -1,0 +1,60 @@
+# COMMAND
+cat > src/components/ui/tones.test.ts <<'EOF'
+import { describe, expect, it } from 'vitest'
+import { DECISION_COPY } from '@/features/assurance/decisions'
+import { toneBar, toneBorder, toneDot, toneSoftBg, toneText, toneTile, toneTint } from './tones'
+
+describe('semantic status red', () => {
+  it('DENY is red; ALLOW, REQUIRE_APPROVAL and DEFER are not', () => {
+    expect(DECISION_COPY.DENY.tone).toBe('red')
+    expect(DECISION_COPY.ALLOW.tone).toBe('mint')
+    expect(DECISION_COPY.REQUIRE_APPROVAL.tone).not.toBe('red')
+    expect(DECISION_COPY.DEFER.tone).not.toBe('red')
+  })
+
+  it('has a com
+
+# OUTPUT (as recorded in session transcript)
+ Test Files  15 passed (15)
+      Tests  128 passed (128)
+✓ built in 623ms
+      112 |
+      113 | test('unknown routes show a friendly page', async ({ page }) => {
+        at /home/claude/aegisai-frontend/tests/e2e/foundation.spec.ts:110:19
+
+    Error Context: test-results/foundation-accessibility-no-WCAG-2-A-AA-violations-desktop/error-context.md
+
+  2) [mobile] › tests/e2e/foundation.spec.ts:99:1 › accessibility: no WCAG 2 A/AA violations ───────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 9
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "id": "color-contrast",
+    +     "impact": "serious",
+    +     "nodes": Array [
+    +       ".bg-red-deep",
+    +     ],
+    +   },
+    + ]
+
+      108 |     nodes: v.nodes.slice(0, 3).map((n) => n.target.join(' ')),
+      109 |   }))
+    > 110 |   expect(summary).toEqual([])
+          |                   ^
+      111 | })
+      112 |
+      113 | test('unknown routes show a friendly page', async ({ page }) => {
+        at /home/claude/aegisai-frontend/tests/e2e/foundation.spec.ts:110:19
+
+    Error Context: test-results/foundation-accessibility-no-WCAG-2-A-AA-violations-mobile/error-context.md
+
+  2 failed
+    [desktop] › tests/e2e/foundation.spec.ts:99:1 › accessibility: no WCAG 2 A/AA violations ───────
+    [mobile] › tests/e2e/foundation.spec.ts:99:1 › accessibility: no WCAG 2 A/AA violations ────────
+  2 skipped
+  67 passed (3.0m)

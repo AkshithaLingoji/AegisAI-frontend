@@ -1,0 +1,39 @@
+7:test('Assurance Center is reachable from the sidebar and renders every section', async ({ page, isMobile }) => {
+22:test('search and filters work, and a policy opens', async ({ page }) => {
+40:test('inspecting an evaluation moves focus to the inspection and shows the discrepancy', async ({ page }) => {
+55:test('every decision type can be inspected', async ({ page }) => {
+68:test('identity switches between Finance and Health', async ({ page }) => {
+78:  test(`no horizontal overflow and no axe violations: ${url}`, async ({ page }) => {
+diff --git a/tests/e2e/screenshots.spec.ts b/tests/e2e/screenshots.spec.ts
+index c077e21..ac7b9bb 100644
+--- a/tests/e2e/screenshots.spec.ts
++++ b/tests/e2e/screenshots.spec.ts
+@@ -82,3 +82,26 @@ test('capture Agent Operations screenshots', async ({ page }, testInfo) => {
+     }
+   }
+ })
++
++test('capture Assurance Center screenshots', async ({ page }, testInfo) => {
++  const name = testInfo.project.name
++  const url = '/assurance?eval=run-HLT-02-protected-pe2&policy=POL-EXPORT-001&identity=agent-health'
++  await page.goto(url)
++  await expect(page.getByRole('heading', { level: 2, name: 'Policy decision inspector' })).toBeAttached()
++  await page.evaluate(() => document.fonts.ready)
++  await page.screenshot({ path: `${dir}/as-${name}-01-top.png` })
++  await page.screenshot({ path: `${dir}/as-${name}-02-full-page.png`, fullPage: true })
++  for (const id of ['overview', 'registry', 'identity', 'history', 'context', 'verification', 'decision']) {
++    const el = page.locator(`#${id}`).locator('xpath=ancestor::section[1]')
++    await el.scrollIntoViewIfNeeded()
++    await el.screenshot({ path: `${dir}/as-${name}-section-${id}.png` })
++  }
++  // The other decision types, for the record.
++  for (const [id, label] of [['case-fin-approval-pe1', 'approval'], ['case-hlt-defer-pe1', 'defer']] as const) {
++    await page.goto(`/assurance?eval=${id}`)
++    await expect(page.getByRole('heading', { level: 2, name: 'Policy decision inspector' })).toBeAttached()
++    const el = page.locator('#decision').locator('xpath=ancestor::section[1]')
++    await el.scrollIntoViewIfNeeded()
++    await el.screenshot({ path: `${dir}/as-${name}-decision-${label}.png` })
++  }
++})
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1.34s

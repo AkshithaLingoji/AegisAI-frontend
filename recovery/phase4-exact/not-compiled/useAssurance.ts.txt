@@ -1,0 +1,24 @@
+import { useQuery } from '@tanstack/react-query'
+import { configuredSource, services } from '@/services'
+import { buildAssuranceModel, type AssuranceModel } from './model'
+
+/** Everything comes through the service interfaces; if any service fails the whole query fails (no mock fallback). */
+export function useAssurance() {
+  return useQuery<AssuranceModel>({
+    queryKey: ['assurance', configuredSource],
+    queryFn: async () => {
+      const [agents, principals, scenarios, resources, experiments, policies, cases] = await Promise.all([
+        services.agents.listAgents(),
+        services.agents.listPrincipals(),
+        services.scenarios.listScenarios(),
+        services.resources.listResources(),
+        services.experiments.listExperiments(),
+        services.assurance.listPolicies(),
+        services.assurance.listEvaluationCases(),
+      ])
+      return buildAssuranceModel({ agents, principals, scenarios, resources, experiments, policies, cases })
+    },
+    retry: false,
+    staleTime: Infinity,
+  })
+}

@@ -1,0 +1,257 @@
+# COMMAND
+cat src/components/ui/tones.ts src/components/ui/StatePanel.tsx; sed -n 15,32p src/styles/index.css; sed -n 40,100p src/styles/index.css; sed -n 12,24p src/features/assurance/decisions.tsx; sed -n 1,30p src/features/assurance/VerificationSection.tsx; grep -n "rose\|Rose" src/features/foundation/showcaseData.ts tests -r | head -20; grep -n "REQUIRE_APPROVAL\|DEFER" src/features/assurance/decisions.tsx | head
+
+# OUTPUT (as recorded in session transcript)
+/**
+ * Semantic tones. Meaning is never carried by colour alone — components pair
+ * tones with an icon or a text label.
+ */
+export type Tone = 'neutral' | 'lavender' | 'sky' | 'mint' | 'rose' | 'peach'
+
+export const toneText: Record<Tone, string> = {
+  neutral: 'text-fg-muted',
+  lavender: 'text-lavender',
+  sky: 'text-sky',
+  mint: 'text-mint',
+  rose: 'text-rose',
+  peach: 'text-peach',
+}
+
+export const toneSoftBg: Record<Tone, string> = {
+  neutral: 'bg-raised',
+  lavender: 'bg-lavender/[0.16]',
+  sky: 'bg-sky/[0.16]',
+  mint: 'bg-mint/[0.16]',
+  rose: 'bg-rose/[0.18]',
+  peach: 'bg-peach/[0.16]',
+}
+
+export const toneBorder: Record<Tone, string> = {
+  neutral: 'border-line',
+  lavender: 'border-lavender/30',
+  sky: 'border-sky/30',
+  mint: 'border-mint/30',
+  rose: 'border-rose/30',
+  peach: 'border-peach/30',
+}
+
+export const toneDot: Record<Tone, string> = {
+  neutral: 'bg-fg-subtle',
+  lavender: 'bg-lavender',
+  sky: 'bg-sky',
+  mint: 'bg-mint',
+  rose: 'bg-rose',
+  peach: 'bg-peach',
+}
+
+/** Whole-surface tint for cards and panels: a visible pastel wash on Slate. */
+export const toneTint: Record<Tone, string> = {
+  neutral: 'border-line bg-surface',
+  lavender: 'border-lavender/30 bg-lavender/[0.17]',
+  sky: 'border-sky/30 bg-sky/[0.16]',
+  mint: 'border-mint/30 bg-mint/[0.16]',
+  rose: 'border-rose/45 tint-rose',
+  peach: 'border-peach/50 tint-peach',
+}
+
+/** Icon tile: pastel fill with the matching pastel glyph. */
+export const toneTile: Record<Tone, string> = {
+  neutral: 'bg-raised text-fg-muted',
+  lavender: 'bg-lavender/[0.18] text-lavender',
+  sky: 'bg-sky/[0.18] text-sky',
+  mint: 'bg-mint/[0.18] text-mint',
+  rose: 'bg-rose/[0.26] text-rose',
+  peach: 'bg-peach/[0.28] text-peach',
+}
+
+/** Thin accent bar used to mark a section with its pastel. */
+export const toneBar: Record<Tone, string> = {
+  neutral: 'bg-line-strong',
+  lavender: 'bg-lavender',
+  sky: 'bg-sky',
+  mint: 'bg-mint',
+  rose: 'bg-rose',
+  peach: 'bg-peach',
+}
+import type { ReactNode } from 'react'
+import {
+  CircleCheck,
+  Inbox,
+  LoaderCircle,
+  ShieldX,
+  TriangleAlert,
+  type LucideIcon,
+} from 'lucide-react'
+import { cn } from '@/lib/cn'
+import { toneSoftBg, toneText, toneTint, type Tone } from './tones'
+
+export type StateVariant = 'loading' | 'empty' | 'success' | 'denied' | 'error'
+
+const config: Record<StateVariant, { icon: LucideIcon; tone: Tone; role: 'status' | 'alert' }> = {
+  loading: { icon: LoaderCircle, tone: 'sky', role: 'status' },
+  empty: { icon: Inbox, tone: 'neutral', role: 'status' },
+  success: { icon: CircleCheck, tone: 'mint', role: 'status' },
+  // "Denied" is an expected, healthy outcome of a protection — not a malfunction.
+  denied: { icon: ShieldX, tone: 'rose', role: 'status' },
+  error: { icon: TriangleAlert, tone: 'peach', role: 'alert' },
+}
+
+export interface StatePanelProps {
+  variant: StateVariant
+  title: ReactNode
+  description?: ReactNode
+  action?: ReactNode
+  className?: string
+}
+
+/** One consistent treatment for loading, empty, success, denied and error states. */
+export function StatePanel({ variant, title, description, action, className }: StatePanelProps) {
+  const { icon: Icon, tone, role } = config[variant]
+  return (
+    <div
+      role={role}
+      data-state-variant={variant}
+      className={cn(
+        'flex flex-col items-center gap-4 rounded-card border px-6 py-10 text-center',
+        toneTint[tone],
+        className,
+      )}
+    >
+      <div className={cn('flex size-14 items-center justify-center rounded-full', toneSoftBg[tone], toneText[tone])}>
+        <Icon className={cn('size-7', variant === 'loading' && 'animate-spin')} aria-hidden />
+      </div>
+      <div className="max-w-md space-y-1.5">
+        <p className="text-heading font-semibold text-fg">{title}</p>
+        {description && <p className="text-sm leading-relaxed text-fg-muted">{description}</p>}
+      </div>
+      {action}
+    </div>
+  )
+}
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Brand palette */
+  --color-midnight: #171923;
+  --color-slate: #24283a;
+  --color-lavender: #a99af7;
+  --color-sky: #8cc8f5;
+  --color-mint: #9dd9c0;
+  --color-rose: #f1b5c1;
+  --color-peach: #f0cb91;
+  --color-cloud: #e8eaf2;
+
+  /* Surfaces (low -> high elevation) */
+  --color-canvas: var(--color-midnight);
+  --color-surface: var(--color-slate);
+  --color-raised: color-mix(in srgb, var(--color-slate) 88%, var(--color-cloud));
+  --color-fg-subtle: color-mix(in srgb, var(--color-cloud) 72%, var(--color-slate));
+
+  /* Accent roles — each has one job, and is always paired with an icon or label.
+     lavender: brand, primary action, selection   sky: Protected, information
+     mint: allowed, success, healthy              rose: blocked, denied, error
+     peach: simulated data, caution, attention */
+
+  /* Type scale */
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.02em;
+  --text-title: 1.75rem;
+  --text-title--line-height: 1.2;
+  --text-title--letter-spacing: -0.015em;
+  --text-heading: 1.25rem;
+  --text-heading--line-height: 1.35;
+
+  --radius-card: 1.75rem;
+  --shadow-card:
+    inset 0 1px 0 0 rgb(232 234 242 / 0.06), 0 18px 40px -26px rgb(10 11 18 / 0.7);
+}
+
+/*
+  Tinted-surface washes for rose and peach. Flat low-opacity rose/peach over
+  Slate turns grey-brown (warm hues lose chroma over a blue base), so these are
+  composed instead: rose is a slightly stronger flat wash for a dusty pink;
+  peach adds a touch of rose for warmth plus a soft highlight in the top-right
+  corner (away from text). Fill lightness is capped so secondary text keeps
+  4.5:1 contrast. The base palette values are unchanged.
+*/
+@utility tint-rose {
+  background-color: var(--color-surface);
+  background-image: linear-gradient(rgb(241 181 193 / 0.25), rgb(241 181 193 / 0.25));
+}
+@utility tint-peach {
+  background-color: var(--color-surface);
+  background-image:
+    radial-gradient(70% 110% at 100% 0%, rgb(240 203 145 / 0.2), transparent 65%),
+    linear-gradient(rgb(241 181 193 / 0.07), rgb(241 181 193 / 0.07)),
+    linear-gradient(rgb(240 203 145 / 0.27), rgb(240 203 145 / 0.27));
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-canvas);
+    /* Two soft pastel washes give the backdrop depth without going neon. */
+    background-image:
+      radial-gradient(56rem 36rem at 88% -6%, rgb(169 154 247 / 0.24), transparent 70%),
+      radial-gradient(48rem 32rem at -6% 58%, rgb(140 200 245 / 0.14), transparent 70%),
+      radial-gradient(44rem 30rem at 100% 100%, rgb(157 217 192 / 0.1), transparent 70%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+  tone: Tone
+  icon: ReactNode
+  className?: string
+}
+
+const ic = 'size-3.5'
+export const DECISION_COPY: Record<PolicyDecisionKey, DecisionCopy> = {
+  ALLOW: { label: 'ALLOW', meaning: 'The action meets the demonstration rules.', tone: 'mint', icon: <CircleCheck className={ic} aria-hidden /> },
+  DENY: { label: 'DENY', meaning: 'The action violates a demonstration rule.', tone: 'rose', icon: <Ban className={ic} aria-hidden /> },
+  REQUIRE_APPROVAL: {
+    label: 'REQUIRE APPROVAL',
+    meaning: 'Additional human authorization is required before the action could go ahead.',
+    tone: 'neutral',
+import { CircleCheck, CircleHelp, OctagonAlert } from 'lucide-react'
+import { Badge, Card, CardHeader } from '@/components/ui'
+import { cn } from '@/lib/cn'
+import { PolicyDecisionBadge } from './decisions'
+import { Inspecting } from './ContextSection'
+import type { Check, CheckStatus, EvaluationView } from './model'
+
+const STATUS: Record<CheckStatus, { label: string; tone: 'mint' | 'rose' | 'neutral'; icon: React.ReactNode }> = {
+  match: { label: 'Matches', tone: 'mint', icon: <CircleCheck className="size-3.5" aria-hidden /> },
+  mismatch: { label: 'Mismatch', tone: 'rose', icon: <OctagonAlert className="size-3.5" aria-hidden /> },
+  unknown: { label: 'Cannot compare', tone: 'neutral', icon: <CircleHelp className="size-3.5" aria-hidden /> },
+}
+
+function Row({ label, left, right, check, leftLabel, rightLabel }: { label: string; left: string; right: string; check: Check['status']; leftLabel: string; rightLabel: string }) {
+  const s = STATUS[check]
+  return (
+    <li className={cn('space-y-3 rounded-2xl border px-4 py-4', check === 'mismatch' ? 'border-rose/60 bg-rose/[0.10]' : 'border-line bg-raised/60')} data-check={check}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-sm font-semibold text-fg">{label}</h4>
+        <Badge tone={s.tone} icon={s.icon}>{s.label}</Badge>
+      </div>
+      <dl className="grid gap-3 md:grid-cols-2">
+        <div>
+          <dt className="text-xs font-medium uppercase tracking-wider text-fg-subtle">{leftLabel}</dt>
+          <dd className="mt-0.5 text-sm text-fg">{left}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium uppercase tracking-wider text-fg-subtle">{rightLabel}</dt>
+          <dd className="mt-0.5 text-sm text-fg">{right}</dd>
+        </div>
+src/features/foundation/showcaseData.ts:14:  { name: 'Dusty rose', hex: '#F1B5C1', className: 'bg-rose', textClass: 'text-midnight', role: 'Blocked, denied, errors' },
+src/features/foundation/showcaseData.ts:23:  { tone: 'rose' as const, title: 'Rose surface', note: 'Blocked actions and denied access.' },
+21:  REQUIRE_APPROVAL: {
+28:  DEFER: {
+29:    label: 'DEFER',

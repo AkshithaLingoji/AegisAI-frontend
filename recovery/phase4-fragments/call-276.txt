@@ -1,0 +1,10 @@
+# COMMAND
+grep -n -i "gateway\|executed\|outcome" src/features/assurance/InspectorSection.tsx | head -20; grep -n "outcome\|Blocked\|blocked" src/features/assurance/fields.tsx src/features/assurance/HistorySection.tsx src/features/assurance/OverviewSection.tsx | head
+
+# OUTPUT (as recorded in session transcript)
+23:  const gw = view.gateway
+104:          <h3 id="separation" className="text-heading font-semibold text-fg">Decision, gateway outcome and execution are three different things</h3>
+107:          A decision is what the evaluation concluded. The gateway outcome is what happened to the action afterwards. Execution is whether the resource was actually used. An ALLOW is never proof that anything ran.
+113:          <Stage step="2 · Gateway outcome" title={gw ? String(gw.outcome).replace(/^./, (c) => c.toUpperCase()) : 'No gateway result'}>
+114:            <p className="text-sm text-fg-muted">{gw ? gw.message : 'This evaluation was not sent to a gateway.'}</p>
+116:          <Stage step="3 · Resource execution" title={view.execution.state === 'executed' ? 'Recorded as executed' : view.execution.state === 'not-executed' ? 'Not executed' : 'Not run'}>

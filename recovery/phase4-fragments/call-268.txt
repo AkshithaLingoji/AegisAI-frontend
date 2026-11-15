@@ -1,0 +1,16 @@
+# COMMAND
+grep -n "services\." src/features/assurance/useAssurance.ts src/features/command-center/useCommandCenter.ts
+
+# OUTPUT (as recorded in session transcript)
+src/features/assurance/useAssurance.ts:11:        services.agents.listAgents(),
+src/features/assurance/useAssurance.ts:12:        services.agents.listPrincipals(),
+src/features/assurance/useAssurance.ts:13:        services.scenarios.listScenarios(),
+src/features/assurance/useAssurance.ts:14:        services.resources.listResources(),
+src/features/assurance/useAssurance.ts:15:        services.experiments.listExperiments(),
+src/features/assurance/useAssurance.ts:16:        services.assurance.listPolicies(),
+src/features/assurance/useAssurance.ts:17:        services.assurance.listEvaluationCases(),
+src/features/command-center/useCommandCenter.ts:15:        services.agents.listAgents(),
+src/features/command-center/useCommandCenter.ts:16:        services.agents.listPrincipals(),
+src/features/command-center/useCommandCenter.ts:17:        services.scenarios.listScenarios(),
+src/features/command-center/useCommandCenter.ts:18:        services.resources.listResources(),
+src/features/command-center/useCommandCenter.ts:19:        services.experiments.listExperiments(),

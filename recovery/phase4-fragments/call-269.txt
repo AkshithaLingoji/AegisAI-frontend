@@ -1,0 +1,31 @@
+# COMMAND
+python3 - <<'EOF'
+p='docs/INTEGRATION.md'
+s=open(p).read()
+marker="## Moving into the main repository"
+assert marker in s
+new='''## Service interfaces that need backend integration
+
+All services are defined in `src/services/contracts/` and composed as `AegisServices`. **Every backend adapter is currently unavailable.** In `src/services/backend/`, `getSourceInfo()` and each method below reject with `NotConnectedError`, and the UI shows that failure instead of falling back to mock data. No endpoint, URL path or payload format is implied by anything here: the method names are the frontend's own s
+
+# OUTPUT (as recorded in session transcript)
+ README.md           |  6 +++++-
+ docs/INTEGRATION.md | 53 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 58 insertions(+), 1 deletion(-)
+diff --git a/README.md b/README.md
+index 8f12bbf..8787c05 100644
+--- a/README.md
++++ b/README.md
+@@ -39,7 +39,11 @@ src/
+     index.ts    the single place that picks mock vs backend
+   state/        Zustand (UI state only) + TanStack Query hooks
+   components/   ui/ (design system), layout/, evidence/, demo/, brand/
+-  features/     one folder per module (Phase 1: design-system gallery)
++  features/     one folder per module
++                  foundation/       design-system gallery            (Phase 1)
++                  command-center/   overview of runs and outcomes    (Phase 2)
++                  agent-operations/ agents, tools, resources, tasks  (Phase 3)
++                  assurance/        policies, context, decisions     (Phase 4)
+   app/          router, providers, navigation
+   config/       env parsing
+ ```

@@ -1,0 +1,212 @@
+      />
+
+      {query.isPending && (
+        <StatePanel variant="loading" title="Loading assurance data…" description="Fetching policies, identities and evaluation records." className="py-20" />
+      )}
+
+      {query.isError && (
+        <StatePanel
+          variant="error"
+          title="Assurance data couldn't be loaded"
+          description={<>{query.error.message} The app does not substitute mock data when the selected source is unavailable.</>}
+          action={
+            <Button variant="secondary" onClick={() => query.refetch()} leadingIcon={<RefreshCw className="size-4" aria-hidden />}>
+              Try again
+            </Button>
+          }
+          className="py-16"
+        />
+      )}
+
+      {empty && <StatePanel variant="empty" title="Nothing to show yet" description="The selected source reported no policies and no evaluations." className="py-16" />}
+
+      {model && !empty && (
+        <>
+          <nav aria-label="On this page">
+            <ul className="flex flex-wrap gap-2">
+              {JUMPS.map(([id, label]) => (
+                <li key={id}>
+                  <a href={`#${id}`} className="inline-flex min-h-10 items-center rounded-full border border-line bg-raised px-4 text-sm text-fg-muted transition-colors hover:text-fg">
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <Section id="overview" tone="lavender" title="Assurance overview" description="Counted from the evaluation records below, not typed in.">
+            <OverviewSection model={model} onInspect={inspect} />
+          </Section>
+
+          <Section id="registry" tone="mint" title="Policy registry" description="The demonstration policies, and what each one says should happen. Nothing here can be edited or executed.">
+            <RegistrySection model={model} selectedId={params.get('policy') ?? undefined} onSelect={(id) => set({ policy: id })} />
+          </Section>
+
+          <Section id="identity" tone="sky" title="Identity and permissions" description="Who each agent acts for, and what that user may and may not use.">
+            <IdentitySection identities={model.identities} selectedId={params.get('identity') ?? undefined} onSelect={(id) => set({ identity: id })} />
+          </Section>
+
+          <Section id="history" tone="peach" title="Evaluation history" description="Every recorded evaluation. Filter them, then inspect one in full.">
+            <HistorySection model={model} selectedId={selected?.id} onInspect={inspect} />
+          </Section>
+
+          {selected ? (
+            <>
+              <Section id="context" tone="lavender" title="Trusted context" description="What was known about the request, the user, the agent and the resource when the action was assessed.">
+                <div className="space-y-5">
+                  <InspectionPicker evaluations={model.evaluations} selectedId={selected.id} onSelect={(id) => set({ eval: id })} />
+                  <ContextSection view={selected} />
+                </div>
+              </Section>
+
+              <Section id="verification" tone="rose" title="Intent-action verification" description="Does the proposed action match what the user actually asked for?">
+                <VerificationSection view={selected} />
+              </Section>
+
+              <Section id="decision" tone="sky" title="Policy decision inspector" description="The decision in full, kept apart from what the gateway did and whether anything ran.">
+                <InspectorSection view={selected} onOpenPolicy={openPolicy} />
+              </Section>
+            </>
+          ) : (
+            <StatePanel variant="empty" title="No evaluation to inspect" description="There are no recorded evaluations, so context, intent checks and decisions have nothing to show." />
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
+import { describe, expect, it, vi } from 'vitest'
+import { AppProviders } from '@/app/providers'
+import { routes } from '@/app/routes'
+
+function renderAt(path: string) {
+  const router = createMemoryRouter(routes, { initialEntries: [path] })
+  render(
+    <AppProviders>
+      <RouterProvider router={router} />
+    </AppProviders>,
+  )
+  return router
+}
+const ready = () => screen.findByRole('heading', { level: 2, name: 'Assurance overview' })
+
+describe('Assurance overview', () => {
+  it('derives every figure from evaluation records and labels the data as mock', async () => {
+    renderAt('/assurance')
+    await ready()
+    expect(screen.getByRole('heading', { level: 1, name: 'Assurance & Policy Center' })).toBeInTheDocument()
+    expect(screen.getAllByText('MOCK / DEVELOPMENT').length).toBeGreaterThan(0)
+    const dist = document.querySelector('[data-overview="distribution"]') as HTMLElement
+    const counts = Object.fromEntries(
+      ['ALLOW', 'DENY', 'REQUIRE_APPROVAL', 'DEFER'].map((k) => [k, within(dist.querySelector(`[data-distribution="${k}"]`) as HTMLElement).getAllByText(/^\d+$/)[0]!.textContent]),
+    )
+    expect(counts).toEqual({ ALLOW: '12', DENY: '2', REQUIRE_APPROVAL: '2', DEFER: '2' })
+    expect(document.querySelector('[data-agent-assurance="agent-finance"]')).toHaveTextContent('Finance Agent')
+    expect(document.querySelector('[data-agent-assurance="agent-health"]')).toHaveTextContent('Health Administration Agent')
+    expect(screen.getByRole('list', { name: 'Warnings' })).toBeInTheDocument()
+  })
+})
+
+describe('Policy registry', () => {
+  it('lists the demonstration policies and filters by search, agent, status and category', async () => {
+    renderAt('/assurance')
+    await ready()
+    const list = () => screen.getByRole('list', { name: 'Policies' })
+import type { Tone } from '@/components/ui/tones'
+import {
+  Bot,
+  FlaskConical,
+  Gauge,
+  LayoutDashboard,
+  Palette,
+  ScrollText,
+  Settings,
+  ShieldCheck,
+  type LucideIcon,
+} from 'lucide-react'
+
+export interface NavItem {
+  id: string
+  label: string
+  icon: LucideIcon
+  /** The module's pastel, reused for its icon tile and (later) its page accents. */
+  tone: Tone
+  /** Route. Only modules that actually exist have one. */
+  to?: string
+  /** Planned modules are listed (greyed, not linked) so the product map is visible. */
+  plannedPhase?: number
+}
+
+export const NAV_ITEMS: NavItem[] = [
+  { id: 'command-center', label: 'Command Center', icon: LayoutDashboard, tone: 'lavender', to: '/' },
+  { id: 'agent-operations', label: 'Agent Operations', icon: Bot, tone: 'sky', to: '/agents' },
+  { id: 'assurance-policy', label: 'Assurance & Policy', icon: ShieldCheck, tone: 'mint', to: '/assurance' },
+  { id: 'red-team-lab', label: 'Red-Team Lab', icon: FlaskConical, tone: 'rose', plannedPhase: 5 },
+  { id: 'audit-incident', label: 'Audit & Incidents', icon: ScrollText, tone: 'peach', plannedPhase: 6 },
+  { id: 'research-benchmark', label: 'Research & Benchmarks', icon: Gauge, tone: 'sky', plannedPhase: 7 },
+  { id: 'configuration', label: 'Configuration', icon: Settings, tone: 'neutral', plannedPhase: 8 },
+  { id: 'design-system', label: 'Design system', icon: Palette, tone: 'lavender', to: '/design-system' },
+]
+/**
+ * Semantic tones. Meaning is never carried by colour alone — components pair
+ * tones with an icon or a text label.
+ */
+export type Tone = 'neutral' | 'lavender' | 'sky' | 'mint' | 'rose' | 'red' | 'peach'
+
+export const toneText: Record<Tone, string> = {
+  neutral: 'text-fg-muted',
+  lavender: 'text-lavender',
+  sky: 'text-sky',
+  mint: 'text-mint',
+  rose: 'text-rose',
+  red: 'text-red-pale',
+  peach: 'text-peach',
+}
+
+export const toneSoftBg: Record<Tone, string> = {
+  neutral: 'bg-raised',
+  lavender: 'bg-lavender/[0.16]',
+  sky: 'bg-sky/[0.16]',
+  mint: 'bg-mint/[0.16]',
+  rose: 'bg-rose/[0.18]',
+  red: 'bg-red/[0.16]',
+  peach: 'bg-peach/[0.16]',
+}
+
+export const toneBorder: Record<Tone, string> = {
+  neutral: 'border-line',
+  lavender: 'border-lavender/30',
+  sky: 'border-sky/30',
+  mint: 'border-mint/30',
+  rose: 'border-rose/30',
+  red: 'border-red/55',
+  peach: 'border-peach/30',
+}
+
+export const toneDot: Record<Tone, string> = {
+  neutral: 'bg-fg-subtle',
+  lavender: 'bg-lavender',
+  sky: 'bg-sky',
+  mint: 'bg-mint',
+  rose: 'bg-rose',
+  red: 'bg-red',
+  peach: 'bg-peach',
+}
+
+/** Whole-surface tint for cards and panels: a visible pastel wash on Slate. */
+export const toneTint: Record<Tone, string> = {
+  neutral: 'border-line bg-surface',
+  lavender: 'border-lavender/30 bg-lavender/[0.17]',
+  sky: 'border-sky/30 bg-sky/[0.16]',
+  mint: 'border-mint/30 bg-mint/[0.16]',
+  rose: 'border-rose/45 tint-rose',
+  red: 'border-red/55 tint-red',
+  peach: 'border-peach/50 tint-peach',
+}
+
+/** Icon tile: pastel fill with the matching pastel glyph. */
+export const toneTile: Record<Tone, string> = {
+  neutral: 'bg-raised text-fg-muted',

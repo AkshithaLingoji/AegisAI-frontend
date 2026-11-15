@@ -1,0 +1,17 @@
+# COMMAND
+sed -n 44,52p src/features/assurance/model.ts; grep -n "docs/screenshots\|screenshots" README.md | head -3; git diff --stat HEAD~1 HEAD -- docs/screenshots | tail -1; git diff --name-status HEAD~1 HEAD -- docs/screenshots | awk '{print $1}' | sort | uniq -c
+
+# OUTPUT (as recorded in session transcript)
+  raw: string
+}
+
+/** Known spellings only; `escalate` and anything else is never guessed at. */
+export function normaliseDecision(raw: string): NormalisedDecision {
+  const k = raw.trim().toUpperCase().replace(/[\s-]+/g, '_')
+  return (DECISION_ORDER as string[]).includes(k) ? { key: k as PolicyDecisionKey, raw } : { key: 'OTHER', raw }
+}
+
+21:| `pnpm screenshots` | Regenerates `docs/screenshots/` at desktop and mobile sizes |
+ 38 files changed, 0 insertions(+), 0 deletions(-)
+     22 A
+     16 M

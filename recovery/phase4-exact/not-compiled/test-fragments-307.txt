@@ -1,0 +1,54 @@
+src/features/assurance/AssurancePage.test.tsx:29:    expect(counts).toEqual({ ALLOW: '10', DENY: '2', REQUIRE_APPROVAL: '2', DEFER: '2' })
+src/features/assurance/AssurancePage.test.tsx:118:    expect(rows()).toHaveLength(16)
+src/features/assurance/AssurancePage.test.tsx:141:    expect(within(screen.getByRole('list', { name: 'Evaluation history' })).getAllByRole('listitem')).toHaveLength(16)
+src/features/assurance/AssurancePage.test.tsx:219:    expect(await screen.findByText(/NOTE TO ASSISTANT/)).toBeInTheDocument()
+src/features/assurance/AssurancePage.test.tsx:238:    await userEvent.click(await screen.findByRole('button', { name: 'Open POL-EXPORT-001 in the policy registry' }))
+src/features/assurance/model.test.ts:25:  it('counts decisions from evaluation records: 12 run evaluations + 4 cases', async () => {
+src/features/assurance/model.test.ts:27:    expect(m.totals).toMatchObject({ evaluations: 16, runEvaluations: 12, caseEvaluations: 4 })
+src/features/assurance/model.test.ts:28:    expect(m.totals.byDecision).toEqual({ ALLOW: 10, DENY: 2, REQUIRE_APPROVAL: 2, DEFER: 2, OTHER: 0 })
+src/features/assurance/model.test.ts:41:    expect(fin!.evaluations).toBe(9)
+src/features/assurance/model.test.ts:65:    expect(e.retrieved[0]!.text).toContain('NOTE TO ASSISTANT')
+src/features/assurance/model.test.ts:71:    expect(allowed.length).toBe(10)
+src/features/assurance/model.test.ts:92:    expect(byId['POL-SCOPE-001']!.evaluations).toBe(12) // every run evaluation carries a scope reason
+src/features/assurance/model.test.ts:93:    expect(byId['POL-SCOPE-001']!.byDecision).toMatchObject({ ALLOW: 10, DENY: 2 })
+src/features/agent-operations/AgentOperations.test.tsx:104:    expect(await screen.findByText(/NOTE TO ASSISTANT/)).toBeInTheDocument()
+src/features/agent-operations/AgentOperations.test.tsx:112:    await userEvent.click(screen.getByRole('button', { name: /All 14 audit records/ }))
+src/features/agent-operations/model.test.ts:25:    expect(fin!.totals).toEqual({ runs: 4, proposed: 14, executed: 13, blocked: 1, outOfScopeProposed: 2 })
+src/features/agent-operations/model.test.ts:26:    expect(hlt!.totals).toEqual({ runs: 4, proposed: 10, executed: 9, blocked: 1, outOfScopeProposed: 2 })
+src/features/agent-operations/model.test.ts:27:    expect(fin!.lastRunAt).toBe('2026-03-02T09:30:21.600Z')
+src/features/agent-operations/model.test.ts:69:    expect(fin!.audit).toHaveLength(14)
+})
+
+describe('Inspecting an evaluation', () => {
+  it('defaults to a denied evaluation and shows context, mismatch and decision', async () => {
+    renderAt('/assurance')
+    await ready()
+    expect(document.querySelector('[data-inspector]')).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'Intent-action result' })).toBeInTheDocument()
+  })
+
+  it('HLT-02: highlights the Patient A / Patient B discrepancy and keeps decision, gateway and execution apart', async () => {
+    renderAt('/assurance?eval=run-HLT-02-protected-pe2')
+    await ready()
+    const result = await screen.findByRole('status', { name: 'Intent-action result' })
+    expect(result).toHaveTextContent('Mismatch found')
+    expect(result).toHaveTextContent('The request concerns Patient A record and Visit summary for Patient A, but the action targets Patient B record.')
+    expect(document.querySelector('[data-verification="mismatch"]')).toBeInTheDocument()
+    expect(document.querySelectorAll('[data-check="mismatch"]').length).toBeGreaterThanOrEqual(3)
+    const inspector = document.querySelector('[data-inspector]') as HTMLElement
+    expect(within(inspector).getAllByText('DENY').length).toBeGreaterThan(0)
+    expect(within(inspector).getByText('Blocked — not executed. The resource was left unchanged.')).toBeInTheDocument()
+    expect(within(inspector).getByText('Not executed')).toBeInTheDocument()
+    expect(within(inspector).getByText(/An ALLOW is never proof that anything ran/)).toBeInTheDocument()
+    expect(inspector.querySelector('[data-field="simulation-id"]')).toHaveTextContent('run-HLT-02-protected')
+    expect(within(inspector).getByText('POL-SCOPE-001', { exact: false })).toBeInTheDocument()
+  })
+
+  it('ALLOW is shown as a decision, not as proof of execution', async () => {
+    renderAt('/assurance?eval=run-FIN-01-protected-pe1')
+    await ready()
+    const inspector = await waitForInspector()
+    expect(within(inspector).getAllByText('The action meets the demonstration rules.').length).toBeGreaterThan(0)
+    expect(within(inspector).getByText(/never proof that anything ran/)).toBeInTheDocument()
+    expect(inspector.querySelector('[data-stage="2 · Gateway outcome"]')).toBeInTheDocument()
+  })

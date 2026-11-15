@@ -1,0 +1,136 @@
+import { RefreshCw } from 'lucide-react'
+import { useMemo } from 'react'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Section } from '@/components/layout/Section'
+import { Button, StatePanel } from '@/components/ui'
+import { DataSourceTag } from '../agent-operations/badges'
+import { ContextSection, InspectionPicker } from './ContextSection'
+import { HistorySection } from './HistorySection'
+import { IdentitySection } from './IdentitySection'
+import { InspectorSection } from './InspectorSection'
+import { OverviewSection } from './OverviewSection'
+import { RegistrySection } from './RegistrySection'
+import { VerificationSection } from './VerificationSection'
+import { goTo, useAssuranceParams } from './selection'
+import { useAssurance } from './useAssurance'
+
+const JUMPS: [string, string][] = [
+  ['overview', 'Overview'],
+  ['registry', 'Policy registry'],
+  ['identity', 'Identity & permissions'],
+  ['history', 'Evaluation history'],
+  ['context', 'Trusted context'],
+  ['verification', 'Intent check'],
+  ['decision', 'Decision inspector'],
+]
+
+export function AssurancePage() {
+  const query = useAssurance()
+  const model = query.data
+  const { params, set } = useAssuranceParams()
+
+  /** The evaluation being inspected: the URL's, else the first denied one, else the newest. */
+  const selected = useMemo(() => {
+    if (!model || model.evaluations.length === 0) return undefined
+    return (
+      model.evaluations.find((e) => e.id === params.get('eval')) ??
+      model.evaluations.find((e) => e.decision.key === 'DENY') ??
+      model.evaluations[0]
+    )
+  }, [model, params])
+
+  const inspect = (id: string) => {
+    set({ eval: id })
+    goTo('inspection')
+  }
+  const openPolicy = (id: string) => {
+    set({ policy: id })
+    goTo('registry')
+  }
+
+  const empty = model && model.policies.length === 0 && model.evaluations.length === 0
+
+  return (
+    <div className="space-y-14">
+      <PageHeader
+        eyebrow="Assurance & Policy"
+        title="Assurance & Policy Center"
+        description="See how proposed agent actions are checked: which policies exist, what identity and context an action is assessed against, and what the four possible decisions mean. Everything here comes from demonstration rules."
+        actions={<DataSourceTag />}
+      />
+
+      {query.isPending && (
+        <StatePanel variant="loading" title="Loading assurance data…" description="Fetching policies, identities and evaluation records." className="py-20" />
+      )}
+
+      {query.isError && (
+        <StatePanel
+          variant="error"
+          title="Assurance data couldn't be loaded"
+          description={<>{query.error.message} The app does not substitute mock data when the selected source is unavailable.</>}
+          action={
+            <Button variant="secondary" onClick={() => query.refetch()} leadingIcon={<RefreshCw className="size-4" aria-hidden />}>
+              Try again
+            </Button>
+          }
+          className="py-16"
+        />
+      )}
+
+      {empty && <StatePanel variant="empty" title="Nothing to show yet" description="The selected source reported no policies and no evaluations." className="py-16" />}
+
+      {model && !empty && (
+        <>
+          <nav aria-label="On this page">
+            <ul className="flex flex-wrap gap-2">
+              {JUMPS.map(([id, label]) => (
+                <li key={id}>
+                  <a href={`#${id}`} className="inline-flex min-h-10 items-center rounded-full border border-line bg-raised px-4 text-sm text-fg-muted transition-colors hover:text-fg">
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <Section id="overview" tone="lavender" title="Assurance overview" description="Counted from the evaluation records below, not typed in.">
+            <OverviewSection model={model} onInspect={inspect} />
+          </Section>
+
+          <Section id="registry" tone="mint" title="Policy registry" description="The demonstration policies, and what each one says should happen. Nothing here can be edited or executed.">
+            <RegistrySection model={model} selectedId={params.get('policy') ?? undefined} onSelect={(id) => set({ policy: id })} />
+          </Section>
+
+          <Section id="identity" tone="sky" title="Identity and permissions" description="Who each agent acts for, and what that user may and may not use.">
+            <IdentitySection identities={model.identities} selectedId={params.get('identity') ?? undefined} onSelect={(id) => set({ identity: id })} />
+          </Section>
+
+          <Section id="history" tone="peach" title="Evaluation history" description="Every recorded evaluation. Filter them, then inspect one in full.">
+            <HistorySection model={model} selectedId={selected?.id} onInspect={inspect} />
+          </Section>
+
+          {selected ? (
+            <>
+              <Section id="context" tone="lavender" title="Trusted context" description="What was known about the request, the user, the agent and the resource when the action was assessed.">
+                <div className="space-y-5">
+                  <InspectionPicker evaluations={model.evaluations} selectedId={selected.id} onSelect={(id) => set({ eval: id })} />
+                  <ContextSection view={selected} />
+                </div>
+              </Section>
+
+              <Section id="verification" tone="rose" title="Intent-action verification" description="Does the proposed action match what the user actually asked for?">
+                <VerificationSection view={selected} />
+              </Section>
+
+              <Section id="decision" tone="sky" title="Policy decision inspector" description="The decision in full, kept apart from what the gateway did and whether anything ran.">
+                <InspectorSection view={selected} onOpenPolicy={openPolicy} />
+              </Section>
+            </>
+          ) : (
+            <StatePanel variant="empty" title="No evaluation to inspect" description="There are no recorded evaluations, so context, intent checks and decisions have nothing to show." />
+          )}
+        </>
+      )}
+    </div>
+  )
+}

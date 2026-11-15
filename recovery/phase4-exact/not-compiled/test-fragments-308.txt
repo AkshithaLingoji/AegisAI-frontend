@@ -1,0 +1,29 @@
+src/features/assurance/AssurancePage.test.tsx:147:    const row = document.querySelector('[data-evaluation="run-FIN-02-protected-pe3"]') as HTMLElement
+src/features/assurance/AssurancePage.test.tsx:178:    renderAt('/assurance?eval=run-FIN-01-protected-pe1')
+src/features/assurance/AssurancePage.test.tsx:217:    renderAt('/assurance?eval=run-FIN-02-protected-pe3')
+src/features/assurance/AssurancePage.test.tsx:229:    const row = document.querySelector('[data-evaluation="run-FIN-01-protected-pe1"]') as HTMLElement
+src/features/assurance/AssurancePage.test.tsx:231:    expect(router.state.location.search).toContain('eval=run-FIN-01-protected-pe1')
+src/features/assurance/AssurancePage.test.tsx:236:    const router = renderAt('/assurance?eval=run-FIN-02-protected-pe3')
+tests/e2e/assurance.spec.ts:57:    ['run-FIN-01-protected-pe1', 'ALLOW'],
+tests/e2e/assurance.spec.ts:58:    ['run-FIN-02-protected-pe3', 'DENY'],
+    await ready()
+    expect((await screen.findAllByText('Invoice period')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Contradictory')).toBeInTheDocument()
+    expect(screen.getAllByText(/This is data the agent retrieved, not an instruction from the user/).length).toBeGreaterThan(0)
+  })
+
+  it('FIN-02 export: shows the retrieved instruction as context and flags operation mismatch', async () => {
+    renderAt('/assurance?eval=run-FIN-02-protected-pe3')
+    await ready()
+    expect(await screen.findByText(/NOTE TO ASSISTANT/)).toBeInTheDocument()
+    expect(document.querySelector('[data-check="mismatch"]')).toBeInTheDocument()
+  })
+
+    expect(await within(exportCard).findByText(/OUT_OF_SCOPE_RESOURCE/)).toBeVisible()
+  })
+
+  it('expands the execution timeline', async () => {
+    renderAt('/agents/agent-finance?task=FIN-02&condition=baseline')
+    await userEvent.click(await screen.findByRole('button', { name: /Execution timeline/ }))
+    expect(await screen.findByText(/NOTE TO ASSISTANT/)).toBeInTheDocument()
+  })

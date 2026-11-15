@@ -1,0 +1,33 @@
+# COMMAND
+grep -n -i "service\|listTools\|AgentTool\|six\|6 " docs/INTEGRATION.md | head -30; echo ---README; grep -n -i "service\|phase" README.md | head -20; echo ---norm; sed -n 1,54p src/features/assurance/decisions.tsx | grep -n -i "normal\|escalate\|other\|replace\|toUpperCase" ; grep -n -i "escalate\|other" src/features/assurance/model.ts | head; echo ---ctx; grep -n "Phase 3\|AgentTool\|listTools" docs/PROVISIONAL-CONTRACTS.md | head; echo ---mock-vs-doc; grep -c "id: 'POL-" src/services/mock/engine/assurance.ts; grep -c "simulationId" src/services/mock/engine/assurance.ts
+
+# OUTPUT (as recorded in session transcript)
+6:2. **Compare** them with `src/domain/` and `src/services/contracts/`; record mismatches in a table.
+8:4. **Implement adapters** in `src/services/backend/`, one service at a time, mapping backend payloads to the reconciled domain types.
+10:6. **Preserve the UI:** screens depend only on `src/services/contracts`, so they should not change.
+15:- ESLint blocks UI imports of `services/mock` and `services/backend`.
+21:`src/` is self-contained. Copy it with `src/domain` (after reconciliation), keep `src/services/contracts` as the seam, and drop `src/services/mock` and `src/features/foundation` if they aren't wanted there.
+---README
+3:Standalone frontend for AegisAI, built **without access to the backend repository**. All data comes through service interfaces; today those are served by a clearly labelled development mock.
+5:> **Status:** Phase 4 (Assurance & Policy Center) of 8 — Foundation, Command Center, Agent Operations and Assurance & Policy are built. See `docs/INTEGRATION.md` for the plan to connect the real backend.
+18:| `pnpm typecheck` / `pnpm lint` | Static checks (lint also enforces the service-isolation rule) |
+35:  services/
+42:  features/     one folder per module (Phase 1: design-system gallery)
+47:ESLint forbids importing `services/mock` or `services/backend` from anywhere outside `src/services`.
+---norm
+5:import { DECISION_ORDER, type DecisionKey, type NormalisedDecision } from './model'
+37:export function PolicyDecisionBadge({ decision, className }: { decision: NormalisedDecision; className?: string }) {
+38:  if (decision.key === 'OTHER') {
+40:      <Badge tone="neutral" data-decision="OTHER" icon={<CircleHelp className={ic} aria-hidden />} className={className}>
+53:export const decisionLabel = (k: DecisionKey) => (k === 'OTHER' ? 'Other' : DECISION_COPY[k].label)
+38:export type DecisionKey = PolicyDecisionKey | 'OTHER'
+47:/** Known spellings only; `escalate` and anything else is never guessed at. */
+50:  return (DECISION_ORDER as string[]).includes(k) ? { key: k as PolicyDecisionKey, raw } : { key: 'OTHER', raw }
+155:const emptyCounts = (): Record<DecisionKey, number> => ({ ALLOW: 0, DENY: 0, REQUIRE_APPROVAL: 0, DEFER: 0, OTHER: 0 })
+---ctx
+41:## Added in Phase 3
+43:- `AgentTool` (`src/domain/tool.ts`) — PROVISIONAL. A capability an agent can invoke (action kind, reachable resources, a scope label, whether it is a simulation stand-in, optional destination). It describes what a tool *can* do, not whether anyone is permitted to use it.
+45:- `AgentsService.listTools()` — new method on the existing service interface; the backend adapter rejects with "not connected". The mock also adds two synthetic resources (Q3 budgets, Appointment schedule) and renames the health agent "Health Administration Agent".
+---mock-vs-doc
+8
+1

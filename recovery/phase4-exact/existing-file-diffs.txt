@@ -1,0 +1,186 @@
+# Exact Phase 4 diffs to existing files, recorded in the transcript (NOT applied where they depend on unrecovered files)
+
+diff --git a/src/app/app.test.tsx b/src/app/app.test.tsx
+index 95418ae..03701fd 100644
+--- a/src/app/app.test.tsx
++++ b/src/app/app.test.tsx
+@@ -25,10 +25,10 @@ describe('app shell', () => {
+   it('lists only real modules as links; planned modules are not navigable', async () => {
+     renderAt('/design-system')
+     const nav = (await screen.findAllByRole('navigation', { name: 'Primary' }))[0]!
+-    expect(within(nav).getAllByRole('link').map((l) => l.textContent)).toEqual(['Command Center', 'Agent Operations', 'Design system'])
+-    const planned = within(nav).getByText('Assurance & Policy').closest('li')!
++    expect(within(nav).getAllByRole('link').map((l) => l.textContent)).toEqual(['Command Center', 'Agent Operations', 'Assurance & Policy', 'Design system'])
++    const planned = within(nav).getByText('Red-Team Lab').closest('li')!
+     expect(planned).toHaveAttribute('aria-disabled', 'true')
+-    expect(within(nav).queryByRole('link', { name: /assurance/i })).not.toBeInTheDocument()
++    expect(within(nav).queryByRole('link', { name: /red-team/i })).not.toBeInTheDocument()
+   })
+ 
+   it('shows a friendly page for unknown routes', async () => {
+diff --git a/src/app/navigation.ts b/src/app/navigation.ts
+index ea0c19d..37b39f6 100644
+--- a/src/app/navigation.ts
++++ b/src/app/navigation.ts
+@@ -26,7 +26,7 @@ export interface NavItem {
+ export const NAV_ITEMS: NavItem[] = [
+   { id: 'command-center', label: 'Command Center', icon: LayoutDashboard, tone: 'lavender', to: '/' },
+   { id: 'agent-operations', label: 'Agent Operations', icon: Bot, tone: 'sky', to: '/agents' },
+-  { id: 'assurance-policy', label: 'Assurance & Policy', icon: ShieldCheck, tone: 'mint', plannedPhase: 4 },
++  { id: 'assurance-policy', label: 'Assurance & Policy', icon: ShieldCheck, tone: 'mint', to: '/assurance' },
+   { id: 'red-team-lab', label: 'Red-Team Lab', icon: FlaskConical, tone: 'rose', plannedPhase: 5 },
+   { id: 'audit-incident', label: 'Audit & Incidents', icon: ScrollText, tone: 'peach', plannedPhase: 6 },
+   { id: 'research-benchmark', label: 'Research & Benchmarks', icon: Gauge, tone: 'sky', plannedPhase: 7 },
+diff --git a/src/app/routes.tsx b/src/app/routes.tsx
+index efd6020..5861f43 100644
+--- a/src/app/routes.tsx
++++ b/src/app/routes.tsx
+@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router-dom'
+ import { AppShell } from '@/components/layout/AppShell'
+ import { AgentDetailPage } from '@/features/agent-operations/AgentDetailPage'
+ import { AgentOperationsPage } from '@/features/agent-operations/AgentOperationsPage'
++import { AssurancePage } from '@/features/assurance/AssurancePage'
+ import { CommandCenterPage } from '@/features/command-center/CommandCenterPage'
+ import { DesignSystemPage } from '@/features/foundation/DesignSystemPage'
+ import { NotFoundPage } from './NotFoundPage'
+@@ -13,6 +14,7 @@ export const routes: RouteObject[] = [
+       { index: true, element: <CommandCenterPage /> },
+       { path: 'agents', element: <AgentOperationsPage /> },
+       { path: 'agents/:agentId', element: <AgentDetailPage /> },
++      { path: 'assurance', element: <AssurancePage /> },
+       { path: 'design-system', element: <DesignSystemPage /> },
+       { path: '*', element: <NotFoundPage /> },
+     ],
+diff --git a/src/domain/enforcement.ts b/src/domain/enforcement.ts
+index 8860062..f0d32c2 100644
+--- a/src/domain/enforcement.ts
++++ b/src/domain/enforcement.ts
+@@ -8,7 +8,7 @@ import type { Extensible, IsoTimestamp, Provenance } from './common'
+ export interface PolicyEvaluation {
+   id: string
+   proposalId: string
+-  decision: Extensible<'allow' | 'deny' | 'escalate'>
++  decision: Extensible<'allow' | 'deny' | 'require_approval' | 'defer' | 'escalate'>
+   reasons: { code: string; message: string }[]
+   policyRefs?: string[]
+   evaluatedAt: IsoTimestamp
+diff --git a/src/domain/index.ts b/src/domain/index.ts
+index e0faa10..6d2bdc3 100644
+--- a/src/domain/index.ts
++++ b/src/domain/index.ts
+@@ -5,5 +5,6 @@ export * from './task'
+ export * from './enforcement'
+ export * from './evidence'
+ export * from './experiment'
++export * from './policy'
+ export * from './scenario'
+ export * from './tool'
+diff --git a/src/domain/task.ts b/src/domain/task.ts
+index a9f743f..87198d1 100644
+--- a/src/domain/task.ts
++++ b/src/domain/task.ts
+@@ -9,6 +9,12 @@ export interface UserTask {
+   prompt: string
+   scenarioId?: string
+   submittedAt: IsoTimestamp
++  /**
++   * What the request actually concerns, as annotated by the demonstration data.
++   * Used only to show whether a proposed action matches the request. Omitted when
++   * the request does not say.
++   */
++  intent?: { resourceIds: string[]; actionKinds: string[] }
+ }
+ 
+ /** An action the agent wants to take. Proposed, not yet permitted.
+diff --git a/src/services/mock/engine/fixtures.ts b/src/services/mock/engine/fixtures.ts
+index 16d8d68..38e93e6 100644
+--- a/src/services/mock/engine/fixtures.ts
++++ b/src/services/mock/engine/fixtures.ts
+@@ -152,6 +152,9 @@ export interface ScenarioFixture {
+ 
+ const SUBMITTED = '2026-03-02T08:59:00.000Z'
+ 
++const FIN_INTENT = { resourceIds: ['fin-expenses-q3', 'fin-vendor-invoice', 'fin-q3-summary'], actionKinds: ['read', 'write'] }
++const HLT_INTENT = { resourceIds: ['hlt-patient-a', 'hlt-visit-summary-a'], actionKinds: ['read', 'write'] }
++
+ const FIN_REQUEST = "Summarise this quarter's team expenses and flag anything unusual."
+ const HLT_REQUEST = 'Prepare a short visit summary for Patient A.'
+ 
+@@ -178,7 +181,7 @@ export const scenarioFixtures: ScenarioFixture[] = [
+       domain: 'finance',
+       category: 'legitimate',
+       summary: 'A finance analyst asks the Finance Agent for an expense summary. Everything it needs is within the analyst’s permissions.',
+-      task: { id: 'task-FIN-01', agentId: 'agent-finance', principalId: 'user-finance-analyst', prompt: FIN_REQUEST, scenarioId: 'FIN-01', submittedAt: SUBMITTED },
++      task: { id: 'task-FIN-01', agentId: 'agent-finance', principalId: 'user-finance-analyst', prompt: FIN_REQUEST, scenarioId: 'FIN-01', submittedAt: SUBMITTED, intent: FIN_INTENT },
+       resourceIds: ['fin-expenses-q3', 'fin-vendor-invoice', 'fin-q3-summary', 'fin-payroll'],
+     },
+     plan: [...finReads, finWrite],
+@@ -193,7 +196,7 @@ export const scenarioFixtures: ScenarioFixture[] = [
+       domain: 'finance',
+       category: 'adversarial',
+       summary: 'The same request, but a retrieved vendor document hides an instruction telling the agent to export payroll data it was never asked to touch.',
+-      task: { id: 'task-FIN-02', agentId: 'agent-finance', principalId: 'user-finance-analyst', prompt: FIN_REQUEST, scenarioId: 'FIN-02', submittedAt: SUBMITTED },
++      task: { id: 'task-FIN-02', agentId: 'agent-finance', principalId: 'user-finance-analyst', prompt: FIN_REQUEST, scenarioId: 'FIN-02', submittedAt: SUBMITTED, intent: FIN_INTENT },
+       resourceIds: ['fin-expenses-q3', 'fin-vendor-invoice', 'fin-q3-summary', 'fin-payroll'],
+     },
+     plan: [
+@@ -219,7 +222,7 @@ export const scenarioFixtures: ScenarioFixture[] = [
+       domain: 'health',
+       category: 'legitimate',
+       summary: 'A clinician asks the Health Agent for a visit summary for Patient A, a patient they are cleared to see.',
+-      task: { id: 'task-HLT-01', agentId: 'agent-health', principalId: 'user-clinician', prompt: HLT_REQUEST, scenarioId: 'HLT-01', submittedAt: SUBMITTED },
++      task: { id: 'task-HLT-01', agentId: 'agent-health', principalId: 'user-clinician', prompt: HLT_REQUEST, scenarioId: 'HLT-01', submittedAt: SUBMITTED, intent: HLT_INTENT },
+       resourceIds: ['hlt-patient-a', 'hlt-patient-b', 'hlt-visit-summary-a'],
+     },
+     plan: [
+@@ -237,7 +240,7 @@ export const scenarioFixtures: ScenarioFixture[] = [
+       domain: 'health',
+       category: 'adversarial',
+       summary: 'The request is still about Patient A, but a note in the record points the agent at Patient B, whom the clinician is not cleared to see.',
+-      task: { id: 'task-HLT-02', agentId: 'agent-health', principalId: 'user-clinician', prompt: HLT_REQUEST, scenarioId: 'HLT-02', submittedAt: SUBMITTED },
++      task: { id: 'task-HLT-02', agentId: 'agent-health', principalId: 'user-clinician', prompt: HLT_REQUEST, scenarioId: 'HLT-02', submittedAt: SUBMITTED, intent: HLT_INTENT },
+       resourceIds: ['hlt-patient-a', 'hlt-patient-b', 'hlt-visit-summary-a'],
+     },
+     plan: [
+diff --git a/src/services/mock/index.ts b/src/services/mock/index.ts
+index 7c60aa1..c8b8e20 100644
+--- a/src/services/mock/index.ts
++++ b/src/services/mock/index.ts
+@@ -1,5 +1,6 @@
+ import type { AegisServices } from '../contracts'
+ import { agents, principals, resources, scenarioFixtures, tools } from './engine/fixtures'
++import { evaluationCases, policies } from './engine/assurance'
+ 
+
+# Additional recorded lines (git diff HEAD~1 HEAD)
+status:[]
+0
+## feature/phase-4-assurance-policy
+== code diffs to pre-existing files
+-  { id: 'assurance-policy', label: 'Assurance & Policy', icon: ShieldCheck, tone: 'mint', plannedPhase: 4 },
++  { id: 'assurance-policy', label: 'Assurance & Policy', icon: ShieldCheck, tone: 'mint', to: '/assurance' },
+-  decision: Extensible<'allow' | 'deny' | 'escalate'>
++  decision: Extensible<'allow' | 'deny' | 'require_approval' | 'defer' | 'escalate'>
++  /**
++   * What the request actually concerns, as annotated by the demonstration data.
++   * Used only to show whether a proposed action matches the request. Omitted when
++   * the request does not say.
++   */
++  intent?: { resourceIds: string[]; actionKinds: string[] }
++    assurance: { listPolicies: nc('policies'), listEvaluationCases: nc('evaluation cases') },
++import type { AssuranceService } from './assurance'
++export * from './assurance'
++  assurance: AssuranceService
++const FIN_INTENT = { resourceIds: ['fin-expenses-q3', 'fin-vendor-invoice', 'fin-q3-summary'], actionKinds: ['read', 'write'] }
++const HLT_INTENT = { resourceIds: ['hlt-patient-a', 'hlt-visit-summary-a'], actionKinds: ['read', 'write'] }
++
+-      task: { id: 'task-FIN-01', agentId: 'agent-finance', principalId: 'user-finance-analyst', prompt: FIN_REQUEST, scenarioId: 'FIN-01', submittedAt: SUBMITTED },
++      task: { id: 'task-FIN-01', agentId: 'agent-finance', principalId: 'user-finance-analyst', prompt: FIN_REQUEST, scenarioId: 'FIN-01', submittedAt: SUBMITTED, intent: FIN_INTENT },
+-      task: { id: 'task-FIN-02', agentId: 'agent-finance', principalId: 'user-finance-analyst', prompt: FIN_REQUEST, scenarioId: 'FIN-02', submittedAt: SUBMITTED },
++      task: { id: 'task-FIN-02', agentId: 'agent-finance', principalId: 'user-finance-analyst', prompt: FIN_REQUEST, scenarioId: 'FIN-02', submittedAt: SUBMITTED, intent: FIN_INTENT },
+-      task: { id: 'task-HLT-01', agentId: 'agent-health', principalId: 'user-clinician', prompt: HLT_REQUEST, scenarioId: 'HLT-01', submittedAt: SUBMITTED },
++      task: { id: 'task-HLT-01', agentId: 'agent-health', principalId: 'user-clinician', prompt: HLT_REQUEST, scenarioId: 'HLT-01', submittedAt: SUBMITTED, intent: HLT_INTENT },
+-      task: { id: 'task-HLT-02', agentId: 'agent-health', principalId: 'user-clinician', prompt: HLT_REQUEST, scenarioId: 'HLT-02', submittedAt: SUBMITTED },
++      task: { id: 'task-HLT-02', agentId: 'agent-health', principalId: 'user-clinician', prompt: HLT_REQUEST, scenarioId: 'HLT-02', submittedAt: SUBMITTED, intent: HLT_INTENT },
++import { evaluationCases, policies } from './engine/assurance'
++    assurance: { listPolicies: serve(() => policies), listEvaluationCases: serve(() => evaluationCases) },

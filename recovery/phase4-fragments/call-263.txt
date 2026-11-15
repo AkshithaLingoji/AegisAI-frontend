@@ -1,0 +1,210 @@
+# COMMAND
+echo "status:[$(git status --porcelain)]"; git stash list | wc -l; git status -sb | head -2; echo "== code diffs to pre-existing files"; git diff HEAD~1 HEAD -- src/domain/enforcement.ts src/domain/task.ts src/services/mock/engine/fixtures.ts src/services/backend/index.ts src/services/contracts/index.ts src/services/mock/index.ts src/app/navigation.ts | grep -E "^[-+]" | grep -vE "^(\+\+\+|---)"; echo "== Phase1-3 files still present"; for f in src/features/command-center/CommandCenterPage.tsx src/features/agent-operations/AgentDetailPage.tsx src/features/foundation/DesignSystemPage.tsx src/se
+
+# OUTPUT (as recorded in session transcript)
+status:[]
+0
+## feature/phase-4-assurance-policy
+== code diffs to pre-existing files
+-  { id: 'assurance-policy', label: 'Assurance & Policy', icon: ShieldCheck, tone: 'mint', plannedPhase: 4 },
++  { id: 'assurance-policy', label: 'Assurance & Policy', icon: ShieldCheck, tone: 'mint', to: '/assurance' },
+-  decision: Extensible<'allow' | 'deny' | 'escalate'>
++  decision: Extensible<'allow' | 'deny' | 'require_approval' | 'defer' | 'escalate'>
++  /**
++   * What the request actually concerns, as annotated by the demonstration data.
++   * Used only to show whether a proposed action matches the request. Omitted when
++   * the request does not say.
++   */
++  intent?: { resourceIds: string[]; actionKinds: string[] }
++    assurance: { listPolicies: nc('policies'), listEvaluationCases: nc('evaluation cases') },
++import type { AssuranceService } from './assurance'
++export * from './assurance'
++  assurance: AssuranceService
++const FIN_INTENT = { resourceIds: ['fin-expenses-q3', 'fin-vendor-invoice', 'fin-q3-summary'], actionKinds: ['read', 'write'] }
++const HLT_INTENT = { resourceIds: ['hlt-patient-a', 'hlt-visit-summary-a'], actionKinds: ['read', 'write'] }
++
+-      task: { id: 'task-FIN-01', agentId: 'agent-finance', principalId: 'user-finance-analyst', prompt: FIN_REQUEST, scenarioId: 'FIN-01', submittedAt: SUBMITTED },
++      task: { id: 'task-FIN-01', agentId: 'agent-finance', principalId: 'user-finance-analyst', prompt: FIN_REQUEST, scenarioId: 'FIN-01', submittedAt: SUBMITTED, intent: FIN_INTENT },
+-      task: { id: 'task-FIN-02', agentId: 'agent-finance', principalId: 'user-finance-analyst', prompt: FIN_REQUEST, scenarioId: 'FIN-02', submittedAt: SUBMITTED },
++      task: { id: 'task-FIN-02', agentId: 'agent-finance', principalId: 'user-finance-analyst', prompt: FIN_REQUEST, scenarioId: 'FIN-02', submittedAt: SUBMITTED, intent: FIN_INTENT },
+-      task: { id: 'task-HLT-01', agentId: 'agent-health', principalId: 'user-clinician', prompt: HLT_REQUEST, scenarioId: 'HLT-01', submittedAt: SUBMITTED },
++      task: { id: 'task-HLT-01', agentId: 'agent-health', principalId: 'user-clinician', prompt: HLT_REQUEST, scenarioId: 'HLT-01', submittedAt: SUBMITTED, intent: HLT_INTENT },
+-      task: { id: 'task-HLT-02', agentId: 'agent-health', principalId: 'user-clinician', prompt: HLT_REQUEST, scenarioId: 'HLT-02', submittedAt: SUBMITTED },
++      task: { id: 'task-HLT-02', agentId: 'agent-health', principalId: 'user-clinician', prompt: HLT_REQUEST, scenarioId: 'HLT-02', submittedAt: SUBMITTED, intent: HLT_INTENT },
++import { evaluationCases, policies } from './engine/assurance'
++    assurance: { listPolicies: serve(() => policies), listEvaluationCases: serve(() => evaluationCases) },
+== Phase1-3 files still present
+ok src/features/command-center/CommandCenterPage.tsx
+ok src/features/agent-operations/AgentDetailPage.tsx
+ok src/features/foundation/DesignSystemPage.tsx
+ok src/services/mock/engine/simulate.ts
+ok src/services/mock/engine/seed.ts
+== phase1-3 src/test files changed in 192d556:
+src/app/app.test.tsx
+src/app/navigation.ts
+src/app/routes.tsx
+src/domain/enforcement.ts
+src/domain/index.ts
+src/domain/task.ts
+src/services/backend/index.ts
+src/services/contracts/index.ts
+src/services/mock/engine/fixtures.ts
+src/services/mock/index.ts
+tests/e2e/backend-mode.spec.ts
+tests/e2e/foundation.spec.ts
+tests/e2e/screenshots.spec.ts
+== docs
+import type { Extensible, IsoTimestamp } from './common'
+import type { PolicyEvaluation } from './enforcement'
+import type { ActionProposal, UserTask } from './task'
+
+/**
+ * The four decisions the platform will eventually produce. The backend owns the
+ * real vocabulary and spelling; the UI normalises known spellings for display and
+ * shows anything else verbatim.
+ * @provisional
+ */
+export type PolicyDecisionKey = 'ALLOW' | 'DENY' | 'REQUIRE_APPROVAL' | 'DEFER'
+
+/** @provisional */
+export interface PolicyCondition {
+  /** Plain-language condition, e.g. "The target resource is not on the user's permitted list". */
+  when: string
+  then: Extensible<PolicyDecisionKey>
+  /** Reason code an evaluation carries when this condition decides the outcome. */
+  reasonCode?: string
+}
+
+/**
+ * A demonstration policy shown in the registry. Not an executable policy and not
+ * a real AegisAI policy: there is no authoring or execution in this app.
+ * @provisional
+ */
+export interface Policy {
+  id: string
+  name: string
+  description: string
+  category: Extensible<'access' | 'data-sharing' | 'approval' | 'context' | 'intent'>
+  version: string
+  status: Extensible<'active' | 'draft' | 'retired'>
+  appliesTo: { domains: string[]; summary: string }
+  conditions: PolicyCondition[]
+  /** Reason codes whose evaluations this policy is credited for. */
+  reasonCodes: string[]
+  lastUpdated: IsoTimestamp
+  lastUpdatedBy?: string
+  demonstration: true
+}
+
+/** Something missing, incomplete or contradictory in the context an action was assessed with.
+ * @provisional */
+export interface ContextIssue {
+  kind: Extensible<'missing' | 'incomplete' | 'contradictory'>
+  /** What the issue is about, e.g. "Patient named in the request". */
+  field: string
+  explanation: string
+}
+
+/**
+ * An evaluation that is NOT part of a recorded run: a standalone demonstration
+ * case so that every decision type can be inspected. It has no gateway result and
+ * nothing was executed. Same PROVISIONAL status as everything in src/domain.
+ * @provisional
+ */
+export interface EvaluationCase {
+  id: string
+  /** Simulation identifier shown to people. */
+  simulationId: string
+  title: string
+  task: UserTask
+  proposal: ActionProposal
+  evaluation: PolicyEvaluation
+  retrievedContext?: { resourceId: string; text: string }[]
+  contextIssues: ContextIssue[]
+}
+import type { EvaluationCase, Policy } from '@/domain'
+
+/**
+ * Policies and standalone evaluation cases. Run evaluations are not here: they
+ * come from `ExperimentsService`, exactly as before. PROVISIONAL — no backend
+ * endpoints are implied.
+ */
+export interface AssuranceService {
+  listPolicies(): Promise<Policy[]>
+  listEvaluationCases(): Promise<EvaluationCase[]>
+}
+diff --git a/src/services/backend/index.ts b/src/services/backend/index.ts
+index c93f425..f584301 100644
+--- a/src/services/backend/index.ts
++++ b/src/services/backend/index.ts
+@@ -12,5 +12,6 @@ export function createBackendServices(options: BackendOptions): AegisServices {
+     resources: { listResources: nc('resources') },
+     experiments: { listExperiments: nc('experiments') },
+     audit: { listAuditRecords: nc('audit records') },
++    assurance: { listPolicies: nc('policies'), listEvaluationCases: nc('evaluation cases') },
+   }
+ }
+diff --git a/src/services/contracts/index.ts b/src/services/contracts/index.ts
+index 509a902..a73ca6e 100644
+--- a/src/services/contracts/index.ts
++++ b/src/services/contracts/index.ts
+@@ -1,4 +1,5 @@
+ import type { AgentsService } from './agents'
++import type { AssuranceService } from './assurance'
+ import type { AuditService } from './audit'
+ import type { ExperimentsService } from './experiments'
+ import type { ResourcesService } from './resources'
+@@ -6,6 +7,7 @@ import type { ScenariosService } from './scenarios'
+ import type { SystemService } from './system'
+ 
+ export * from './agents'
++export * from './assurance'
+ export * from './audit'
+ export * from './errors'
+ export * from './experiments'
+@@ -24,4 +26,5 @@ export interface AegisServices {
+   resources: ResourcesService
+   experiments: ExperimentsService
+   audit: AuditService
++  assurance: AssuranceService
+ }
+/**
+ * Demonstration policies and standalone evaluation cases for the development mock.
+ *
+ * These are fixtures, not a policy engine. The decisions in `evaluationCases` are
+ * authored results so that REQUIRE_APPROVAL and DEFER can be inspected; nothing here
+ * evaluates anything, and no case was run through a gateway or executed.
+ */
+import type { ActionProposal, EvaluationCase, Policy, PolicyEvaluation, UserTask } from '@/domain'
+
+export const policies: Policy[] = [
+  {
+    id: 'POL-SCOPE-001',
+    name: 'Resource within the user’s permissions',
+    description: 'An agent may only use resources that the signed-in user is permitted to use.',
+    category: 'access',
+    version: '1.2.0',
+    status: 'active',
+    appliesTo: { domains: ['finance', 'health'], summary: 'Every agent and every resource' },
+    conditions: [
+      { when: 'The target resource is on the signed-in user’s permitted list', then: 'ALLOW', reasonCode: 'WITHIN_SCOPE' },
+      { when: 'The target resource is not on the signed-in user’s permitted list', then: 'DENY', reasonCode: 'OUT_OF_SCOPE_RESOURCE' },
+    ],
+    reasonCodes: ['WITHIN_SCOPE', 'OUT_OF_SCOPE_RESOURCE'],
+    lastUpdated: '2026-02-18T14:20:00.000Z',
+    lastUpdatedBy: 'Demonstration data',
+    demonstration: true,
+  },
+  {
+    id: 'POL-ACTION-001',
+    name: 'Action granted to the user',
+    description: 'An agent may only perform kinds of action (read, write …) that the signed-in user has been granted.',
+    category: 'access',
+    version: '1.1.0',
+    status: 'active',
+    appliesTo: { domains: ['finance', 'health'], summary: 'Every agent and every action' },
+    conditions: [
+      { when: 'The kind of action is on the user’s granted list', then: 'ALLOW', reasonCode: 'WITHIN_SCOPE' },
+      { when: 'The kind of action is not on the user’s granted list', then: 'DENY', reasonCode: 'ACTION_NOT_GRANTED' },
+    ],
+    reasonCodes: ['WITHIN_SCOPE', 'ACTION_NOT_GRANTED'],

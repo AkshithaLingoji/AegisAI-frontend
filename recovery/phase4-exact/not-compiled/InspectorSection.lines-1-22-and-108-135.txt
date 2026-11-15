@@ -1,0 +1,50 @@
+import { ArrowRightLeft } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Badge, Button, Card, CardHeader, ExpandableDetails } from '@/components/ui'
+import { formatTimestamp } from '@/lib/format'
+import { AccessBadge, ClassificationBadge, DataSourceTag } from '../agent-operations/badges'
+import { Inspecting } from './ContextSection'
+import { DECISION_COPY, PolicyDecisionBadge } from './decisions'
+import { DECISION_ORDER, type EvaluationView } from './model'
+
+function Stage({ step, title, children, tone }: { step: string; title: string; children: React.ReactNode; tone?: 'sky' | 'peach' }) {
+  return (
+    <Card tint={tone} className="space-y-2.5" data-stage={step}>
+      <p className="text-xs font-medium uppercase tracking-wider text-fg-subtle">{step}</p>
+      <h4 className="text-base font-semibold text-fg">{title}</h4>
+      {children}
+    </Card>
+  )
+}
+
+export function InspectorSection({ view, onOpenPolicy }: { view: EvaluationView; onOpenPolicy: (id: string) => void }) {
+  const d = view.decision
+  const meaning = d.key === 'OTHER' ? `This decision value (“${d.raw}”) is not one this app recognises, so no meaning is assumed.` : DECISION_COPY[d.key].meaning
+        </p>
+        <div className="grid gap-5 md:grid-cols-3">
+          <Stage step="1 · Policy decision" title={d.key === 'OTHER' ? d.raw : DECISION_COPY[d.key].label} tone="sky">
+            <p className="text-sm text-fg-muted">What the demonstration rules concluded. Nothing more.</p>
+          </Stage>
+          <Stage step="2 · Gateway outcome" title={gw ? String(gw.outcome).replace(/^./, (c) => c.toUpperCase()) : 'No gateway result'}>
+            <p className="text-sm text-fg-muted">{gw ? gw.message : 'This evaluation was not sent to a gateway.'}</p>
+          </Stage>
+          <Stage step="3 · Resource execution" title={view.execution.state === 'executed' ? 'Recorded as executed' : view.execution.state === 'not-executed' ? 'Not executed' : 'Not run'}>
+            <p className="text-sm text-fg-muted">{view.execution.text}</p>
+          </Stage>
+        </div>
+        {view.agentLink && (
+          <Link to={view.agentLink} className="inline-flex min-h-11 items-center text-sm text-sky hover:underline">
+            See this run’s proposed actions and execution history in Agent Operations
+          </Link>
+        )}
+      </section>
+
+      <Card className="space-y-3">
+        <h3 className="text-heading font-semibold text-fg">What the four decisions mean</h3>
+        <ul aria-label="Decision guide" className="space-y-2.5">
+          {DECISION_ORDER.map((k) => (
+            <li key={k} className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl bg-raised/60 px-4 py-2.5 ${k === d.key ? 'ring-2 ring-inset ring-lavender/70' : ''}`}
+              aria-current={k === d.key ? 'true' : undefined}>
+              <PolicyDecisionBadge decision={{ key: k, raw: k }} />
+              <span className="min-w-48 flex-1 text-sm text-fg-muted">{DECISION_COPY[k].meaning}{k === d.key && <span className="ml-2 font-medium text-fg">(this evaluation)</span>}</span>
+            </li>

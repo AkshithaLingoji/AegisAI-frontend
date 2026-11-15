@@ -1,0 +1,11 @@
+import type { EvaluationCase, Policy } from '@/domain'
+
+/**
+ * Policies and standalone evaluation cases. Run evaluations are not here: they
+ * come from `ExperimentsService`, exactly as before. PROVISIONAL — no backend
+ * endpoints are implied.
+ */
+export interface AssuranceService {
+  listPolicies(): Promise<Policy[]>
+  listEvaluationCases(): Promise<EvaluationCase[]>
+}

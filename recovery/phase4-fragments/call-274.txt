@@ -1,0 +1,26 @@
+# COMMAND
+python3 - <<'EOF'
+import re
+def rw(path, pairs, count=1):
+    s=open(path).read()
+    for old,new in pairs:
+        assert old in s,(path,old[:70])
+        s=s.replace(old,new) if count==0 else s.replace(old,new,count)
+    open(path,'w').write(s)
+
+# --- tokens + utility
+rw('src/styles/index.css',[
+("  --color-cloud: #e8eaf2;\n","""  --color-cloud: #e8eaf2;
+
+  /* Semantic status red — DENY, BLOCKED and denied access only. It is not part of the
+     eight-colour brand palette above and does not replace dusty rose, which stays a
+     decorative pastel. Never used for REQUIRE_APPROVAL or DEFER.
+  
+
+# OUTPUT (as recorded in session transcript)
+46:  iconTone?: Tone
+58:  iconTone = 'lavender',
+66:        <div className={cn('flex size-12 shrink-0 items-center justify-center rounded-2xl', toneTile[iconTone])}>
+src/app/navigation.ts:30:  { id: 'red-team-lab', label: 'Red-Team Lab', icon: FlaskConical, tone: 'rose', plannedPhase: 5 },
+src/features/assurance/AssurancePage.tsx:121:              <Section id="verification" tone="rose" title="Intent-action verification" description="Does
+src/features/agent-operations/AgentDetailPage.tsx:107:      <Section id="actions" tone="rose" title="Proposed actions and execution history" descripti

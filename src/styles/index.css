@@ -1,0 +1,159 @@
+@import 'tailwindcss';
+
+/*
+  AegisAI design tokens — "Soft Premium Tech"
+
+  Brand palette (exact):
+    Midnight #171923 · Slate #24283A · Lavender #A99AF7 · Sky blue #8CC8F5
+    Mint #9DD9C0 · Dusty rose #F1B5C1 · Soft peach #F0CB91 · Cloud #E8EAF2
+
+  Dark-first but soft: Midnight is only the page backdrop. Most of what people
+  read sits on Slate and on pastel-tinted Slate, so the interface feels like
+  dusk rather than black. The in-between surface steps below are mixes of
+  Slate and Cloud, not new brand colours.
+*/
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Brand palette */
+  --color-midnight: #171923;
+  --color-slate: #24283a;
+  --color-lavender: #a99af7;
+  --color-sky: #8cc8f5;
+  --color-mint: #9dd9c0;
+  --color-rose: #f1b5c1;
+  --color-peach: #f0cb91;
+  --color-cloud: #e8eaf2;
+
+  /* Semantic status red — DENY, BLOCKED and denied access only. It is not part of the
+     eight-colour brand palette above and does not replace dusty rose, which stays a
+     decorative pastel. Never used for REQUIRE_APPROVAL or DEFER.
+     red:      icons, borders, bars, dots (the signal colour)
+     red-pale: text on red-tinted dark surfaces (readable, ~9:1)
+     red-deep: emphasis edges and strong strokes. #C94C4C is only ~3.2:1 on Slate, so it is
+               never used for small text on the dark surfaces. */
+  --color-red: #ef7777;
+  --color-red-pale: #fce4e4;
+  --color-red-deep: #c94c4c;
+
+  /* Surfaces (low -> high elevation) */
+  --color-canvas: var(--color-midnight);
+  --color-surface: var(--color-slate);
+  --color-raised: color-mix(in srgb, var(--color-slate) 88%, var(--color-cloud));
+  --color-overlay: color-mix(in srgb, var(--color-slate) 80%, var(--color-cloud));
+  --color-line: color-mix(in srgb, var(--color-slate) 84%, var(--color-cloud));
+  --color-line-strong: color-mix(in srgb, var(--color-slate) 70%, var(--color-cloud));
+
+  /* Text */
+  --color-fg: var(--color-cloud);
+  --color-fg-muted: color-mix(in srgb, var(--color-cloud) 86%, var(--color-slate));
+  --color-fg-subtle: color-mix(in srgb, var(--color-cloud) 72%, var(--color-slate));
+
+  /* Accent roles — each has one job, and is always paired with an icon or label.
+     lavender: brand, primary action, selection   sky: Protected, information
+     mint: allowed, success, healthy              red: blocked, denied (rose is decorative)
+     peach: simulated data, caution, attention */
+
+  /* Type scale */
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.02em;
+  --text-title: 1.75rem;
+  --text-title--line-height: 1.2;
+  --text-title--letter-spacing: -0.015em;
+  --text-heading: 1.25rem;
+  --text-heading--line-height: 1.35;
+
+  --radius-card: 1.75rem;
+  --shadow-card:
+    inset 0 1px 0 0 rgb(232 234 242 / 0.06), 0 18px 40px -26px rgb(10 11 18 / 0.7);
+}
+
+/*
+  Tinted-surface washes for rose and peach. Flat low-opacity rose/peach over
+  Slate turns grey-brown (warm hues lose chroma over a blue base), so these are
+  composed instead: rose is a slightly stronger flat wash for a dusty pink;
+  peach adds a touch of rose for warmth plus a soft highlight in the top-right
+  corner (away from text). Fill lightness is capped so secondary text keeps
+  4.5:1 contrast. The base palette values are unchanged.
+*/
+@utility tint-rose {
+  background-color: var(--color-surface);
+  background-image: linear-gradient(rgb(241 181 193 / 0.25), rgb(241 181 193 / 0.25));
+}
+/* Soft red wash for blocked and denied surfaces: flat, capped so text keeps 4.5:1. */
+@utility tint-red {
+  background-color: var(--color-surface);
+  background-image: linear-gradient(rgb(239 119 119 / 0.2), rgb(239 119 119 / 0.2));
+}
+@utility tint-peach {
+  background-color: var(--color-surface);
+  background-image:
+    radial-gradient(70% 110% at 100% 0%, rgb(240 203 145 / 0.2), transparent 65%),
+    linear-gradient(rgb(241 181 193 / 0.07), rgb(241 181 193 / 0.07)),
+    linear-gradient(rgb(240 203 145 / 0.27), rgb(240 203 145 / 0.27));
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-canvas);
+    /* Two soft pastel washes give the backdrop depth without going neon. */
+    background-image:
+      radial-gradient(56rem 36rem at 88% -6%, rgb(169 154 247 / 0.24), transparent 70%),
+      radial-gradient(48rem 32rem at -6% 58%, rgb(140 200 245 / 0.14), transparent 70%),
+      radial-gradient(44rem 30rem at 100% 100%, rgb(157 217 192 / 0.1), transparent 70%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-sky);
+    outline-offset: 3px;
+    border-radius: 0.5rem;
+  }
+  ::selection {
+    background: rgb(169 154 247 / 0.35);
+  }
+}
+
+/* Radix Collapsible open/close — only animates height, the state change. */
+@keyframes collapsible-down {
+  from { height: 0; opacity: 0; }
+  to { height: var(--radix-collapsible-content-height); opacity: 1; }
+}
+@keyframes collapsible-up {
+  from { height: var(--radix-collapsible-content-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
+}
+.collapsible-content[data-state='open'] { animation: collapsible-down 200ms ease-out; }
+.collapsible-content[data-state='closed'] { animation: collapsible-up 160ms ease-in; }
+
+/* Drawer */
+@keyframes drawer-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.drawer-panel[data-state='open'] { animation: drawer-in 220ms ease-out; }
+.drawer-overlay[data-state='open'] { animation: fade-in 200ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
