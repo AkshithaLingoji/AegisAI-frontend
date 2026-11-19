@@ -23,13 +23,13 @@ import { agents, initialSandbox, principals, type PlannedAction, type ScenarioFi
 
 export type Condition = 'baseline' | 'protected'
 
-const STEP_MS = 900
+export const STEP_MS = 900
 
-function clone<T>(value: T): T {
+export function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
 }
 
-function evaluateDemoRules(action: PlannedAction, principal: AuthenticatedPrincipal) {
+export function evaluateDemoRules(action: PlannedAction, principal: AuthenticatedPrincipal) {
   const reasons: { code: string; message: string }[] = []
   if (!principal.permittedResourceIds?.includes(action.targetResourceId)) {
     reasons.push({
@@ -54,7 +54,7 @@ function evaluateDemoRules(action: PlannedAction, principal: AuthenticatedPrinci
   }
 }
 
-function applyAction(
+export function applyAction(
   action: PlannedAction,
   sandbox: Sandbox,
   agentName: string,

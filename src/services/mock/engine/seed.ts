@@ -1,6 +1,8 @@
 import type { AuditRecord, ExperimentResult } from '@/domain'
-import { scenarioFixtures } from './fixtures'
-import { simulateRun, type Condition } from './simulate'
+import { toExperimentResult } from '@/lib/runs/toExperimentResult'
+import { catalogueEntries } from './run/profiles'
+import { runTask } from './run/runner'
+import type { Condition } from './simulate'
 
 /** Fixed clock so every load produces byte-identical records. */
 const BASE_MS = Date.UTC(2026, 2, 2, 9, 0, 0)
@@ -13,8 +15,14 @@ let cached: ExperimentResult[] | undefined
 export function seededExperiments(): ExperimentResult[] {
   if (!cached) {
     let index = 0
-    cached = scenarioFixtures.flatMap((fixture) =>
-      CONDITIONS.map((condition) => simulateRun(fixture, condition, BASE_MS + index++ * RUN_SPACING_MS)),
+    // Produced by the generic runner as canonical RunRecords, then mapped to the
+    // existing ExperimentResult shape so every current view is unchanged.
+    cached = catalogueEntries().flatMap(({ task, profile }) =>
+      CONDITIONS.map((condition) =>
+        toExperimentResult(
+          runTask(task, { runId: `run-${task.id}-${condition}`, path: condition, startMs: BASE_MS + index++ * RUN_SPACING_MS, profile }),
+        ),
+      ),
     )
   }
   return cached

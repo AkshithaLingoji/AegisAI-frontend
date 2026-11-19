@@ -6,10 +6,27 @@ Standalone frontend for AegisAI, built **without access to the backend repositor
 
 ## Run it
 
+Requirements: **Node `^20.19.0` or `>=22.12.0`** (Vite 8) and **pnpm 10** (`corepack enable` or `npm i -g pnpm`). No backend, secrets or machine-specific paths are needed for the default mock mode.
+
 ```bash
-pnpm install
-pnpm dev            # http://localhost:5173
+git clone <repository-url> && cd <repository-folder>
+pnpm install --frozen-lockfile
+cp .env.example .env.local   # optional: the default is VITE_AEGIS_SOURCE=mock
+pnpm dev                     # http://localhost:5173
 ```
+
+**Windows (PowerShell):** `corepack enable` can fail with `EPERM` on some installations. Use this instead, which needs no global install:
+
+```powershell
+git clone <repository-url>; cd <repository-folder>
+corepack pnpm@10 install --frozen-lockfile
+Copy-Item .env.example .env.local   # optional: the default is VITE_AEGIS_SOURCE=mock
+corepack pnpm@10 dev                # http://localhost:5173
+```
+
+The other commands in the table below work the same way as `corepack pnpm@10 <command>`.
+
+Before running the browser tests once: `pnpm exec playwright install chromium` (or set `CHROME_PATH` to an installed Chrome).
 
 | Command | Purpose |
 |---|---|
@@ -17,7 +34,7 @@ pnpm dev            # http://localhost:5173
 | `pnpm build` | Typecheck + production build |
 | `pnpm typecheck` / `pnpm lint` | Static checks (lint also enforces the service-isolation rule) |
 | `pnpm test` | Unit + component tests (Vitest) |
-| `pnpm test:e2e` | Browser tests (Playwright, uses system Chrome at `/usr/bin/google-chrome`, override with `CHROME_PATH`) |
+| `pnpm test:e2e` | Browser tests (Playwright; its own Chromium by default, or `CHROME_PATH=<chrome>`; `PW_NO_SANDBOX=1` only for containers/CI) |
 | `pnpm screenshots` | Regenerates `docs/screenshots/` at desktop and mobile sizes |
 
 ## Data source
@@ -25,7 +42,7 @@ pnpm dev            # http://localhost:5173
 Set `VITE_AEGIS_SOURCE` (see `.env.example`):
 
 - `mock` (default): deterministic synthetic data. The UI shows **MOCK / DEVELOPMENT** and a "Demonstration data" banner.
-- `backend`: real adapters. **Not implemented yet**, so the UI shows **BACKEND UNAVAILABLE** and an explanation. It never falls back to mock data and never claims **CONNECTED BACKEND** unless the backend was actually reached.
+- `backend`: real adapters, configured with `VITE_AEGIS_BACKEND_URL` (no URL is hard-coded anywhere). **Not implemented yet**, so the UI shows **BACKEND UNAVAILABLE** and an explanation. It never falls back to mock data and never claims **CONNECTED BACKEND** unless the backend was actually reached.
 
 ## Architecture
 

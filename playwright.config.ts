@@ -1,7 +1,10 @@
 import { defineConfig, devices } from '@playwright/test'
 
-// Uses the system Chrome so no browser download is required.
-const executablePath = process.env.CHROME_PATH ?? '/usr/bin/google-chrome'
+// By default Playwright uses its own downloaded Chromium (`pnpm exec playwright install chromium`).
+// Set CHROME_PATH to use an installed Chrome instead. Set PW_NO_SANDBOX=1 only in
+// containers/CI that cannot run Chrome's sandbox; it is off by default.
+const executablePath = process.env.CHROME_PATH || undefined
+const args = process.env.PW_NO_SANDBOX === '1' ? ['--no-sandbox'] : []
 
 const MOCK_URL = 'http://127.0.0.1:5173'
 const BACKEND_MODE_URL = 'http://127.0.0.1:5174'
@@ -11,19 +14,17 @@ export default defineConfig({
   fullyParallel: true,
   reporter: [['list']],
   use: {
-    launchOptions: { executablePath, args: ['--no-sandbox'] },
+    launchOptions: { ...(executablePath ? { executablePath } : {}), args },
   },
   webServer: [
     {
-      command: 'pnpm exec vite --host 127.0.0.1 --port 5173 --strictPort',
-      url: MOCK_URL,
+      command: 'corepack pnpm@10 exec vite --host 127.0.0.1 --port 5173 --strictPort',      url: MOCK_URL,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },
     {
       // Same app, built to use the (not yet connected) backend adapters.
-      command: 'pnpm exec vite --host 127.0.0.1 --port 5174 --strictPort',
-      url: BACKEND_MODE_URL,
+      command: 'corepack pnpm@10 exec vite --host 127.0.0.1 --port 5174 --strictPort',      url: BACKEND_MODE_URL,
       env: { VITE_AEGIS_SOURCE: 'backend' },
       reuseExistingServer: false,
       timeout: 60_000,

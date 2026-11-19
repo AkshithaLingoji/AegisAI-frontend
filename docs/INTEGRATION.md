@@ -1,5 +1,8 @@
 # Integration plan
 
+> **Accuracy note (Patch 1).** The sections below that mention an `assurance` service, `Policy`/`EvaluationCase` types or the Assurance & Policy Center describe **Phase 4 work that is not in the recovered source** (only exact reference material is kept under `recovery/`). `src/services/contracts/` currently contains `system`, `agents`, `scenarios`, `resources`, `experiments` and `audit`. Treat the Phase 4 text as a plan, not as existing code. Phase 4 will be rebuilt after the guided workflow, on the shared `RunRecord`.
+
+
 When the AegisAI backend becomes available:
 
 1. **Inspect** its API contracts.
@@ -72,3 +75,58 @@ Also to confirm for Phase 3 data: how agent tools are described by the backend (
 ## Moving into the main repository
 
 `src/` is self-contained. Copy it with `src/domain` (after reconciliation), keep `src/services/contracts` as the seam, and drop `src/services/mock` and `src/features/foundation` if they aren't wanted there.
+
+## Backend integration guide for the guided workflow (Patch 1 status)
+
+**Status: nothing here is verified against a real backend.** The method names below are the frontend's own seam, not a backend API. No endpoint, URL path, payload encoding, authentication scheme or status code is implied. Patch 1 adds domain types, a pure mock run engine and tests only; it adds **no** services, UI, routes or backend adapters. The service methods are introduced in Patch 2 and are listed here so the backend teammate can plan.
+
+### Verified in the current code
+- UI code cannot import `services/mock` or `services/backend` (ESLint `no-restricted-imports`; the only non-service importers are two unit tests that build mock services). Nothing under `src/domain` or `src/lib` imports from `src/services`.
+- Patch 1's run engine lives entirely in `src/services/mock/engine/run`. UI code is only allowed to see the shared types (`src/domain`) and the pure helpers (`src/lib/runs`: canonicalisation, digests, input validation, `toExperimentResult`, `deriveComparison`), none of which know about the mock engine or its simulation profiles.
+- Source selection is one build-time switch (`VITE_AEGIS_SOURCE=mock|backend`). An invalid value throws at startup. In backend mode every adapter rejects with `NotConnectedError`; there is no fallback path to mock data (covered by `tests/e2e/backend-mode.spec.ts`).
+- Configuration: only `VITE_AEGIS_SOURCE` and `VITE_AEGIS_BACKEND_URL`, both in `.env.example`, which contains no URL, path or secret. `.env*` files other than `.env.example` are git-ignored. `VITE_` variables are embedded in the browser bundle, so **never put secrets in them**.
+
+### Logical operations the frontend will need (planned for Patch 2; names provisional)
+| Logical operation | Input | Returns | Mock today | Needs real backend |
+|---|---|---|---|---|
+| list task catalogue | none | `TaskDefinition[]` | built-in catalogue (FIN-01, FIN-02, HLT-01, HLT-02) | yes, or the frontend keeps the catalogue |
+| start run | `TaskDefinition` (inputs already validated) and the execution path | `RunRecord` (or `RunRecord` pair + `RunGroup` for Baseline vs Protected) | scripted by a mock-only `SimulationProfile` | **yes: this is the real agent/policy/gateway work** |
+| get / list runs | run id | `RunRecord` | in-memory only, lost on reload | yes, if history must persist |
+| resolve approval | run id, approval request id, `approved` or `rejected`, optional note | the updated `RunRecord` | append-only simulation, resumes the paused plan | yes: identity, authority and audit of the human decision |
+| validate / snapshot inputs | `TaskInput[]` | `RunInputSnapshot[]` | frontend helper (200 KB/input, 5 inputs) | the backend must enforce the same limits independently |
+
+### What a real `RunRecord` must supply
+- **Four separate records** per action: proposal, policy decision, gateway result (`dispatched`/`blocked`), execution result (`ran`/`not_run`/`failed`). A decision of ALLOW must never be inferred to mean execution.
+- **Ordered execution.** When an action needs approval, the run pauses at that action: later actions are not proposed, decided or run until the request is resolved, and then continue in plan order. A real backend must preserve this ordering guarantee; the frontend never reorders.
+- **Append-only approvals.** An `ApprovalRequest` is immutable; the resolution is a separate record plus an `approval_resolved` event; resolving twice is an error.
+- **Evidence:** `initialState.digest`, `inputsDigest` and per-input `contentDigest`. If the backend computes digests it must use SHA-256 over the canonical serialisation in `src/lib/runs/canonical.ts` (or the contract must define another one); otherwise Baseline-vs-Protected comparison will correctly report "not comparable".
+- **Trust:** `declared-trusted` / `assignedBy: catalogue` may only come from controlled catalogue data. The frontend rejects those claims on custom inputs, and the backend must as well; client-side checks are not a security boundary.
+- **Provenance:** `source: 'backend'` runs must never carry a mock `simulation` note.
+
+### Error handling the UI expects (provisional)
+| Condition | Frontend behaviour | Backend must provide |
+|---|---|---|
+| backend unreachable / not implemented | `NotConnectedError`, explicit "backend unavailable" state, never mock data | a reachable base URL |
+| invalid input (too large, too many, ill-formed text, trust claim) | `InputValidationError` with a list of messages; nothing truncated | the same rules, with machine-readable reasons |
+| approval already resolved / unknown request | `ApprovalError` (`already-resolved`, `unknown-request`) | a distinguishable conflict / not-found result |
+| run cannot be compared | `comparable: false` with reasons | digests as above |
+| per-action execution failure | recorded as `failed`; the run can still complete | a failure reason per action |
+
+### Mock-only capabilities (not to be presented as real)
+Simulation profiles and scripted plans; the demo policy rules (`evaluateDemoRules`); simulated approval; sandbox state replay; in-memory run history; seeded timestamps. The mock never interprets the request text (`requestInterpreted: false`).
+
+### Assumptions that need the backend teammate's confirmation
+1. Whether the backend accepts a full task (request + inputs + selected resources + simulated acting identity) or a task id only.
+2. Whether runs are synchronous or asynchronous, and how progress and the awaiting-approval state are reported (polling, streaming, or push).
+3. Whether the backend owns run history, and for how long.
+4. The decision vocabulary (see the Phase 4 questions above) and how `escalate` maps.
+5. How identity is represented; the UI only shows a *simulated acting identity* and performs no authentication.
+6. Who computes digests, and whether the SHA-256 + canonical-JSON scheme is acceptable.
+7. Limits: 200 KB per input, 5 inputs, UTF-8 text only (text, CSV, JSON).
+8. Whether the backend can provide a Baseline (no assurance layer) path at all.
+9. Authentication of the browser to the backend, and CORS. Nothing is implemented for either.
+
+### Integration blockers
+- The backend contracts do not exist yet for the frontend to read; every adapter is a deliberate `NotConnectedError`.
+- No cross-machine run has been performed: the backend was never reachable from this workspace, so compatibility is **unverified**.
+- Auth/CORS and transport (REST vs streaming) are undecided.

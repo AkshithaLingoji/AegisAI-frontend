@@ -67,3 +67,23 @@ All PROVISIONAL, none implies a backend endpoint or final security semantics.
 6. **Approval.** Is a REQUIRE_APPROVAL evaluation followed by an approval record? The UI shows no approve/reject controls and invents none.
 7. **Classification vs access.** Is `sensitivity` the data classification, and are the values `public | internal | confidential | restricted`? Access is derived from the principal's permitted list; the real model may differ.
 8. **Gateway/execution link.** Is a gateway result guaranteed per evaluation, and is "resource actually changed" reported separately from the gateway outcome?
+
+## Added in the guided-workflow groundwork (Patch 1)
+
+All **PROVISIONAL**, additive, and not backend contracts. Nothing here changes an existing type.
+
+**`RunRecord`** (`src/domain/run.ts`) is the canonical generic run model; `ExperimentResult` is now a *derived* view produced by `toExperimentResult(run)` (`src/lib/runs`). It keeps proposals, decisions, gateway results and execution results as four separate records: an `allow` decision is never evidence that an action ran. The run `status` (`awaiting_approval` | `completed`) describes progress only; each action keeps its own `ExecutionResult` (`ran` | `not_run` | `failed`), so a run can complete with failed actions.
+
+**Approvals are append-only.** An `ApprovalRequest` is written once and never edited; a later `ApprovalResolution` and an `approval_resolved` event are appended. "Pending" is derived (a request without a resolution). The approval step is simulated.
+
+**`TaskDefinition` / `TaskInput`** (`src/domain/taskDefinition.ts`) describe reusable tasks (catalogue or custom). Configured inputs are editable; a run stores immutable `RunInputSnapshot`s of exactly what the agent received (exact content, byte length, SHA-256 content digest, trust metadata). Content is never trimmed, normalised or truncated; it must be valid text and at most 204,800 UTF-8 bytes per input, at most 5 inputs per task (violations are errors, not truncation). User-provided and retrieved content is `untrusted` by default; `declared-trusted` can only come from catalogue data and is not a verdict. **Enforced:** `snapshotInputs(inputs, origin)` rejects (does not silently downgrade) any custom input that claims `declared-trusted` or `assignedBy: 'catalogue'`, and the runner rejects a task that labels itself `catalogue` unless it is a known controlled catalogue definition with exactly that definition's inputs.
+
+**Digests.** State and input digests are SHA-256 over a canonical serialisation (sorted keys, no whitespace, strings untouched). SHA-256 is implemented synchronously (`src/lib/runs/sha256.ts`) and cross-checked against Web Crypto in tests, so no weaker fallback exists. Digests support deterministic comparison only; they are not signatures and give no tamper evidence.
+
+**`RunGroup`** links a Baseline and a Protected run. `deriveComparison` returns `comparable: false` unless: the group's `initialStateDigest` and `inputsDigest` match BOTH runs; each run's recorded digests match its own recorded state and inputs (recomputed); task, agent and simulated acting identity match; both runs are `completed` (a run awaiting approval is not comparable); and the proposals are identical in sequence, kind, target, summary, canonical parameters and agent. Every figure is counted from the two records.
+
+**Approval ordering.** A run pauses at an action that requires approval; later actions are not proposed, decided, dispatched or run until the request is resolved, then the simulated agent continues in plan order (it can pause again). `resolveApproval` therefore needs the run's simulation profile and rejects a mismatched profile or a resolution time before the run's last event. A rejected action simply has no effect on later state.
+
+**Simulation profiles** (`SimulationProfile`, mock engine only) decide what the scripted agent proposes. They are intentionally outside the shared `TaskDefinition`; a backend would ignore them. The mock never interprets the request text.
+
+Open question for the backend owner: how a real `RunRecord` would represent the approval flow, the per-action execution result, and the state snapshots (see `docs/INTEGRATION.md`).
