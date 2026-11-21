@@ -3,6 +3,7 @@ import {
   Bot,
   FlaskConical,
   Gauge,
+  Route,
   LayoutDashboard,
   Palette,
   ScrollText,
@@ -25,6 +26,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { id: 'command-center', label: 'Command Center', icon: LayoutDashboard, tone: 'lavender', to: '/' },
+  { id: 'guided-tasks', label: 'Guided Tasks', icon: Route, tone: 'mint', to: '/tasks' },
   { id: 'agent-operations', label: 'Agent Operations', icon: Bot, tone: 'sky', to: '/agents' },
   { id: 'assurance-policy', label: 'Assurance & Policy', icon: ShieldCheck, tone: 'mint', plannedPhase: 4 },
   { id: 'red-team-lab', label: 'Red-Team Lab', icon: FlaskConical, tone: 'rose', plannedPhase: 5 },

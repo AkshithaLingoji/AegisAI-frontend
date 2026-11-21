@@ -42,3 +42,12 @@ test.describe('Agent Operations with backend selected', () => {
     }
   })
 })
+
+test.describe('Guided Tasks with backend selected', () => {
+  test('shows an error and no mock tasks or runs', async ({ page }) => {
+    await page.goto('/tasks')
+    await expect(page.getByRole('alert').filter({ hasText: 'could' })).toBeVisible()
+    await expect(page.getByText('Expense report')).toHaveCount(0)
+    await expect(page.getByText(/does not substitute mock data/)).toBeVisible()
+  })
+})

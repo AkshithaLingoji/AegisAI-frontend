@@ -3,6 +3,7 @@ import type { AuditService } from './audit'
 import type { ExperimentsService } from './experiments'
 import type { ResourcesService } from './resources'
 import type { ScenariosService } from './scenarios'
+import type { RunsService, TasksService } from './tasks'
 import type { SystemService } from './system'
 
 export * from './agents'
@@ -12,6 +13,7 @@ export * from './experiments'
 export * from './resources'
 export * from './scenarios'
 export * from './system'
+export * from './tasks'
 
 /**
  * The full set of data services the UI may use. Each has a mock implementation
@@ -24,4 +26,6 @@ export interface AegisServices {
   resources: ResourcesService
   experiments: ExperimentsService
   audit: AuditService
+  tasks: TasksService
+  runs: RunsService
 }

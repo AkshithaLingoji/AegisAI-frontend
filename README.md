@@ -2,7 +2,7 @@
 
 Standalone frontend for AegisAI, built **without access to the backend repository**. All data comes through service interfaces; today those are served by a clearly labelled development mock.
 
-> **Status:** Phase 3 (Agent Operations) of 8 — recovered source, see `recovery/RECOVERY-MANIFEST.md` (Phase 4 UI not recovered). See `docs/INTEGRATION.md` for the plan to connect the real backend.
+> **Status:** Phase 3 (Agent Operations) of 8 plus **Guided Tasks** at `/tasks` (see `docs/GUIDED-TASKS.md`). Recovered source, see `recovery/RECOVERY-MANIFEST.md` (Phase 4 UI not recovered). See `docs/INTEGRATION.md` for the plan to connect the real backend.
 
 ## Run it
 
@@ -60,6 +60,7 @@ src/
                   foundation/       design-system gallery            (Phase 1)
                   command-center/   overview of runs and outcomes    (Phase 2)
                   agent-operations/ agents, tools, resources, tasks  (Phase 3)
+                  guided-tasks/     guided workflow at /tasks        (Patch 2)
                   assurance/        policies, context, decisions     (Phase 4)
   app/          router, providers, navigation
   config/       env parsing

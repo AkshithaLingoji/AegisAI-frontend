@@ -12,5 +12,7 @@ export function createBackendServices(options: BackendOptions): AegisServices {
     resources: { listResources: nc('resources') },
     experiments: { listExperiments: nc('experiments') },
     audit: { listAuditRecords: nc('audit records') },
+    tasks: { listTasks: nc('guided tasks'), listSimulationScenarios: nc('simulation scenarios') },
+    runs: { startRun: nc('runs'), resolveApproval: nc('approvals'), getRun: nc('runs'), listRuns: nc('runs') },
   }
 }

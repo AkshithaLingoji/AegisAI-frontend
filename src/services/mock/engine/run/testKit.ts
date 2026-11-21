@@ -11,6 +11,7 @@ export const customTask = (over: Partial<TaskDefinition> = {}): TaskDefinition =
   title: 'Custom task',
   request: 'Do something with the Q3 expenses.',
   tags: ['custom'],
+  inputs: [], // custom tasks never carry catalogue-assigned trust
   ...over,
 })
 

@@ -7,8 +7,8 @@
  * The four catalogue scenarios are derived from `scenarioFixtures`, so no data is
  * duplicated and no domain-specific execution logic exists.
  */
-import type { TaskDefinition } from '@/domain'
-import { scenarioFixtures, type PlannedAction } from '../fixtures'
+import type { TaskDefinition, TaskInput } from '@/domain'
+import { resources, scenarioFixtures, type PlannedAction } from '../fixtures'
 
 export interface SimulationProfile {
   id: string
@@ -35,6 +35,25 @@ export interface CatalogueEntry {
   profile: SimulationProfile
 }
 
+/**
+ * Catalogue inputs: the documents the scripted agent will retrieve, shown so the
+ * user can inspect them. Trust is assigned HERE, by controlled catalogue data:
+ * a document from the adversarial scenarios is `untrusted`; the others are
+ * `declared-trusted`, which only means "declared trusted by the demonstration data".
+ * The demonstration rules do not use trust to decide anything.
+ */
+function catalogueInputs(adversarial: boolean, retrievedContent: Record<string, string>): TaskInput[] {
+  return Object.entries(retrievedContent).map(([resourceId, content]) => ({
+    id: `retrieved-${resourceId}`,
+    label: `${resources.find((r) => r.id === resourceId)?.name ?? resourceId} (document the agent retrieves)`,
+    format: 'text' as const,
+    content,
+    trust: adversarial
+      ? { level: 'untrusted' as const, assignedBy: 'catalogue' as const, reason: 'Third-party document that contains instructions the user did not write.' }
+      : { level: 'declared-trusted' as const, assignedBy: 'catalogue' as const, reason: 'Declared trusted by the demonstration data. This is not a verdict that the content is safe.' },
+  }))
+}
+
 export function catalogueEntries(): CatalogueEntry[] {
   return scenarioFixtures.map(({ scenario, plan, retrievedContent }) => ({
     task: {
@@ -48,7 +67,7 @@ export function catalogueEntries(): CatalogueEntry[] {
       actingPrincipalId: scenario.task.principalId,
       declaredIntent: scenario.task.intent,
       selectedResourceIds: scenario.task.intent?.resourceIds ?? [],
-      inputs: [],
+      inputs: catalogueInputs(scenario.category === 'adversarial', retrievedContent),
       tags: ['catalogue', String(scenario.category)],
     },
     profile: {

@@ -87,3 +87,13 @@ All **PROVISIONAL**, additive, and not backend contracts. Nothing here changes a
 **Simulation profiles** (`SimulationProfile`, mock engine only) decide what the scripted agent proposes. They are intentionally outside the shared `TaskDefinition`; a backend would ignore them. The mock never interprets the request text.
 
 Open question for the backend owner: how a real `RunRecord` would represent the approval flow, the per-action execution result, and the state snapshots (see `docs/INTEGRATION.md`).
+
+## Added in Guided Tasks (Patch 2)
+
+All **PROVISIONAL**; none is a backend contract.
+
+- **`TasksService`** — `listTasks(): GuidedTaskOption[]` (`task`, plain-language `objective`, `includesApproval`) and mock-only `listSimulationScenarios(): SimulationScenarioOption[]`.
+- **`RunsService`** — `startRun`, `resolveApproval`, `getRun`, `listRuns`, returning `RunRecord`. Runs started here use the Protected path. A custom task also names a simulation scenario (mock only).
+- **`RunServiceError`** — `code` (`invalid-input` | `invalid-request` | `unknown-run` | `unknown-approval-request` | `already-resolved` | `conflict`), `message`, `issues[]`.
+- **Catalogue inputs.** Catalogue tasks now carry the documents the scripted agent retrieves as `TaskInput`s with catalogue-assigned trust (FIN-02's document is `untrusted`, the others `declared-trusted` by the demonstration data). The seeded experiments are unchanged (golden digest guard).
+- **Controlled definitions.** The mock service starts catalogue runs from its own definition, never the caller's copy, and fixes the agent and simulated identity of custom tasks from the chosen script.

@@ -76,9 +76,9 @@ Also to confirm for Phase 3 data: how agent tools are described by the backend (
 
 `src/` is self-contained. Copy it with `src/domain` (after reconciliation), keep `src/services/contracts` as the seam, and drop `src/services/mock` and `src/features/foundation` if they aren't wanted there.
 
-## Backend integration guide for the guided workflow (Patch 1 status)
+## Backend integration guide for the guided workflow (Patch 2 status)
 
-**Status: nothing here is verified against a real backend.** The method names below are the frontend's own seam, not a backend API. No endpoint, URL path, payload encoding, authentication scheme or status code is implied. Patch 1 adds domain types, a pure mock run engine and tests only; it adds **no** services, UI, routes or backend adapters. The service methods are introduced in Patch 2 and are listed here so the backend teammate can plan.
+**Status: nothing here is verified against a real backend.** The method names below are the frontend's own seam, not a backend API. No endpoint, URL path, payload encoding, authentication scheme or status code is implied. Patch 1 added the domain types and a pure mock run engine. **Patch 2 adds the `tasks` and `runs` service contracts (`src/services/contracts/tasks.ts`), their mock implementation, backend adapters that reject with `NotConnectedError`, and the `/tasks` Guided Tasks UI**, which depends only on those contracts. The method names are listed here so the backend teammate can plan.
 
 ### Verified in the current code
 - UI code cannot import `services/mock` or `services/backend` (ESLint `no-restricted-imports`; the only non-service importers are two unit tests that build mock services). Nothing under `src/domain` or `src/lib` imports from `src/services`.
@@ -86,7 +86,10 @@ Also to confirm for Phase 3 data: how agent tools are described by the backend (
 - Source selection is one build-time switch (`VITE_AEGIS_SOURCE=mock|backend`). An invalid value throws at startup. In backend mode every adapter rejects with `NotConnectedError`; there is no fallback path to mock data (covered by `tests/e2e/backend-mode.spec.ts`).
 - Configuration: only `VITE_AEGIS_SOURCE` and `VITE_AEGIS_BACKEND_URL`, both in `.env.example`, which contains no URL, path or secret. `.env*` files other than `.env.example` are git-ignored. `VITE_` variables are embedded in the browser bundle, so **never put secrets in them**.
 
-### Logical operations the frontend will need (planned for Patch 2; names provisional)
+### Logical operations the frontend uses (service methods added in Patch 2; names provisional)
+
+Service methods: `tasks.listTasks()`, `tasks.listSimulationScenarios()` (mock only), `runs.startRun({ task, simulationScenarioId? })`, `runs.resolveApproval({ runId, requestId, outcome, note? })`, `runs.getRun(runId)`, `runs.listRuns()`. Refused operations throw `RunServiceError` with a `code` (`invalid-input`, `invalid-request`, `unknown-run`, `unknown-approval-request`, `already-resolved`, `conflict`) and an `issues` list; unreachable backends throw `NotConnectedError`. The UI also reads `resources.listResources()`, `agents.listAgents()` and `agents.listPrincipals()`.
+
 | Logical operation | Input | Returns | Mock today | Needs real backend |
 |---|---|---|---|---|
 | list task catalogue | none | `TaskDefinition[]` | built-in catalogue (FIN-01, FIN-02, HLT-01, HLT-02) | yes, or the frontend keeps the catalogue |
@@ -130,3 +133,9 @@ Simulation profiles and scripted plans; the demo policy rules (`evaluateDemoRule
 - The backend contracts do not exist yet for the frontend to read; every adapter is a deliberate `NotConnectedError`.
 - No cross-machine run has been performed: the backend was never reachable from this workspace, so compatibility is **unverified**.
 - Auth/CORS and transport (REST vs streaming) are undecided.
+
+### What the Guided Tasks UI needs from a backend (Patch 2)
+- `startRun` must return a complete `RunRecord` that is *paused* at the first action needing approval (`status: awaiting_approval`, an `ApprovalRequest`, no later proposals, decisions, gateway results or executions). `resolveApproval` must return the updated record with the appended resolution and the resumed actions. The UI renders only what the record contains; it never computes a decision.
+- `listSimulationScenarios()` has no backend equivalent: when it rejects, the UI disables the custom-task path and says why. A real backend would need its own way to choose behaviour for custom tasks (open question for the backend teammate).
+- Catalogue and custom runs are started on the Protected path only; no Baseline run is started from this UI.
+- Session history is the mock's in-memory map; a backend must say who owns run history and for how long.

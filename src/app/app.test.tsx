@@ -25,7 +25,7 @@ describe('app shell', () => {
   it('lists only real modules as links; planned modules are not navigable', async () => {
     renderAt('/design-system')
     const nav = (await screen.findAllByRole('navigation', { name: 'Primary' }))[0]!
-    expect(within(nav).getAllByRole('link').map((l) => l.textContent)).toEqual(['Command Center', 'Agent Operations', 'Design system'])
+    expect(within(nav).getAllByRole('link').map((l) => l.textContent)).toEqual(['Command Center', 'Guided Tasks', 'Agent Operations', 'Design system'])
     const planned = within(nav).getByText('Assurance & Policy').closest('li')!
     expect(planned).toHaveAttribute('aria-disabled', 'true')
     expect(within(nav).queryByRole('link', { name: /assurance/i })).not.toBeInTheDocument()
