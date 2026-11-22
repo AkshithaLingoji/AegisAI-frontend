@@ -11,6 +11,7 @@ export interface LabSection {
 export const LAB_SECTIONS: LabSection[] = [
   { id: 'overview', label: 'Overview', description: 'What the lab is for and whether anything is connected.', status: 'available', to: '/red-team' },
   { id: 'catalogue', label: 'Scenario Catalogue', description: 'Browse, search and inspect the adversarial scenarios. Nothing here runs them.', status: 'available', to: '/red-team/scenarios' },
+  { id: 'configuration', label: 'Experiment Configuration', description: 'Choose a scenario, target agent, resources and Baseline, Protected or Paired mode, then review. Nothing is started.', status: 'available', to: '/red-team/configure' },
   { id: 'execution', label: 'Execution', description: 'Start a scenario and follow its progress.', status: 'upcoming' },
   { id: 'results', label: 'Results and Evaluation', description: 'See whether each attack was attempted, detected, blocked or successful.', status: 'upcoming' },
   { id: 'evidence', label: 'Evidence', description: 'Inspect the records behind a result.', status: 'upcoming' },

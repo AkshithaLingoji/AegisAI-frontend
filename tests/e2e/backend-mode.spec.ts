@@ -77,4 +77,17 @@ test.describe('Red-Team Lab with backend selected', () => {
     await expect(page.locator('[data-catalogue-state="backend-unavailable"]')).toBeVisible()
     await expect(page.getByText(/Demo:/)).toHaveCount(0)
   })
+
+  test('the experiment configuration and review say the backend is not connected and show no agents, resources or scenarios', async ({ page }) => {
+    for (const path of ['/red-team/configure?scenario=demo-data-exfiltration', '/red-team/review?scenario=demo-data-exfiltration&agent=agent-finance&resource=fin-expenses-q3&mode=paired']) {
+      await page.goto(path)
+      await expect(page.locator('[data-catalogue-state="backend-unavailable"]')).toContainText('the backend is not connected')
+      await expect(page.getByRole('radio')).toHaveCount(0)
+      await expect(page.getByRole('checkbox')).toHaveCount(0)
+      await expect(page.getByText(/Finance Agent|Payroll table|Demo:/)).toHaveCount(0)
+      await expect(page.locator('[data-summary]')).toHaveCount(0)
+      const a11y = await new AxeBuilder({ page }).analyze()
+      expect(a11y.violations.map((v) => `${v.id}: ${v.nodes[0]?.html.slice(0, 120)}`)).toEqual([])
+    }
+  })
 })

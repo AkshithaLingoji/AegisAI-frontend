@@ -1,6 +1,6 @@
 # Red-Team Lab: frontend foundation
 
-The Red-Team Lab is a standalone adversarial-testing workbench whose backend is a **separate experimental subsystem built by another developer**. This document covers the frontend only: the foundation (Patch 3) and the Scenario Catalogue. **Nothing here runs an attack, evaluates an outcome or talks to that backend.** The backend is not connected.
+The Red-Team Lab is a standalone adversarial-testing workbench whose backend is a **separate experimental subsystem built by another developer**. This document covers the frontend only: the foundation, the Scenario Catalogue and Experiment Configuration. **Nothing here runs an attack, evaluates an outcome or talks to that backend.** The backend is not connected.
 
 ## What exists now
 
@@ -10,8 +10,10 @@ The Red-Team Lab is a standalone adversarial-testing workbench whose backend is 
   |---|---|
   | `/red-team` | Overview |
   | `/red-team/scenarios` | Scenario Catalogue (`?q=` search text, `?category=` filter) |
-  | `/red-team/scenarios/:scenarioId` | Scenario detail |
-- **Overview page** (`src/features/red-team/RedTeamOverviewPage.tsx`): purpose, why adversarial testing matters, the separate-subsystem note, the attack categories the lab is designed to examine, a live **connection and data** panel, and a list of the six lab sections. *Overview* and *Scenario Catalogue* are available and linked; *Execution, Results and Evaluation, Evidence* and *Reports* are shown as **Upcoming** and are not links or empty pages.
+  | `/red-team/scenarios/:scenarioId` | Scenario detail (links to Configure experiment) |
+  | `/red-team/configure` | Configure experiment (`?scenario=`, `?agent=`, repeated `?resource=`, `?mode=`) |
+  | `/red-team/review` | Review configuration (same parameters) |
+- **Overview page** (`src/features/red-team/RedTeamOverviewPage.tsx`): purpose, why adversarial testing matters, the separate-subsystem note, the attack categories the lab is designed to examine, a live **connection and data** panel, and a list of the six lab sections. *Overview*, *Scenario Catalogue* and *Experiment Configuration* are available and linked; *Execution, Results and Evaluation, Evidence* and *Reports* are shown as **Upcoming** and are not links or empty pages.
 - **No statistics.** The page shows only what a service reports. With the mock it says there are illustrative demonstration entries and no executions; with the backend selected it says "BACKEND NOT CONNECTED" and shows the failure.
 - **Data-driven categories.** The overview renders an array (`data/plannedCategories.ts`). Scenarios reference categories by an open string id; unknown ids are shown verbatim. There is no component per category or per scenario, and no fixed number of either.
 
@@ -29,6 +31,28 @@ Browse, search and inspect scenario **definitions**. Nothing here runs a scenari
 
 The mock supplies five clearly marked `demo-*` entries, one per category (prompt injection, tool misuse, privilege escalation, data exfiltration, unauthorized actions). They are illustrative so the interface can be shown; they are **not the Red-Team library** and none has been executed.
 
+## Experiment configuration
+
+Workflow: **Scenario Catalogue → Scenario details → Configure experiment → Review configuration**, with a four-step indicator whose earlier steps are links, so the way back is always one click.
+
+**Implemented in the frontend**
+- **Scenario**: chosen from the catalogue (a select listing what `listScenarios()` returned), with the scenario's description, expected secure behaviour (a specification, not a result) and a short, general *organisational risk* statement (`data/categoryRisk.ts`; descriptive context, not a finding).
+- **Target agent**: the agents `services.agents.listAgents()` returns (Finance Agent and Health Administration Agent in the mock). Nothing is hard-coded.
+- **Synthetic resources**: the resources `services.resources.listResources()` returns, grouped by whether they share the agent's domain; other-domain resources stay selectable (an attack may target them) and are flagged on review. Each shows its own sensitivity and which of the agent's listed tools can reach it. **None is pre-selected or called "relevant"**, because no contract says which resources a scenario needs.
+- **Mode**: *Paired Comparison* (default, recommended), *Baseline* (no AegisAI protection) or *Protected* (AegisAI active). Baseline is always red and Protected always teal, each with an icon and a text label. Paired mode shows what must be equivalent in both runs (scenario and attack input, agent and model configuration, identity and permissions, resource snapshots, tools and task context) and the single intended difference (protection Off / On). A single condition shows a warning that there is nothing to compare against.
+- **Review**: a read-only restatement of the whole configuration, the paired design table, the agent's tools, warnings derived from the data (Baseline runs unprotected, single condition, restricted resources, cross-domain resources, mock data), and an explicit **Execution: not started** panel. There is no run button, no result and no claim about what an attack or AegisAI did.
+- The draft lives in the URL, so it is shareable and survives back/forward. It is validated against what the services returned; the frontend rules are: a known scenario, a known agent, at least one known resource (so there is a defined starting snapshot) and a supported mode. These are the frontend's own completeness rules, not backend requirements, and are easy to relax. The review page refuses an incomplete or invalid configuration and says why.
+- *Plain data* disclosure on the review page shows what the frontend collects (`provisionalFrontendDraft: true`, `sentToBackend: false`). It is not a request.
+
+**Depends on the backend (not implemented, nothing assumed)**
+- Executing an experiment, in either condition, and anything about its outcome.
+- Which resources and agents a scenario applies to or requires, and any per-scenario execution parameters.
+- Identity and permissions for a run (the contract has principals but no link from agent to principal, so the identity is not selectable and is described as "the same" in both conditions).
+- Model configuration (not selectable here; described as "the same").
+- Guaranteeing that the two conditions really are equivalent (equal snapshots, tools and context). The UI states the requirement; only a backend can enforce it.
+- How a configuration maps to `ScenarioExecutionRequest` (today only `scenarioId` and free-form `parameters`).
+- In backend mode `services.agents` and `services.resources` are not connected, so the configuration pages show *backend not connected* and no mock data.
+
 ## Structure (follows the existing layering)
 
 | Layer | Location | Role |
@@ -39,6 +63,7 @@ The mock supplies five clearly marked `demo-*` entries, one per category (prompt
 | Mock adapter | `src/services/mock/redTeam.ts` | Demonstration only |
 | Backend adapter | `src/services/backend/redTeam.ts` | Placeholder: reports "not connected" |
 | Feature UI | `src/features/red-team/` | Layout, pages, components, hooks, presentation data, `redTeam.css` |
+| Configuration draft | `src/features/red-team/configuration/` | Provisional frontend draft, URL encoding, validation (not a service contract) |
 
 `AegisServices` gained a `redTeam` member. Components call hooks, hooks call `services.redTeam`; components never call `fetch`, see raw backend JSON or import mock/backend code (ESLint already enforces the last point).
 

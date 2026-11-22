@@ -16,7 +16,13 @@ export const agents: Agent[] = [
     environment: 'Synthetic finance environment',
     description: 'Summarises team expenses and prepares finance reports for the finance analyst.',
     status: 'idle',
-    capabilities: ['Read the expense ledger and budgets', 'Read vendor documents', 'Save finance summaries'],
+    capabilities: [
+      'Read the expense ledger and budgets',
+      'Read vendor documents',
+      'Save finance summaries',
+      'Export tables to an external destination (simulated)',
+      'Move money between accounts (simulated)',
+    ],
   },
   {
     id: 'agent-health',

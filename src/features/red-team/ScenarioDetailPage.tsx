@@ -1,5 +1,6 @@
 import { ArrowLeft, Ban } from 'lucide-react'
 import { Link, useLocation, useParams } from 'react-router-dom'
+import { buttonClasses } from '@/components/ui'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Badge, ExpandableDetails, StatePanel } from '@/components/ui'
 import type { ScenarioDefinition } from '@/domain'
@@ -75,6 +76,11 @@ function Detail({ scenario }: { scenario: ScenarioDefinition }) {
         {eb.details && Object.keys(eb.details).length > 0 && <FieldList fields={eb.details} label="Expected behaviour details" />}
         <p className="text-sm text-fg-subtle">This describes what a well-protected system should do. It does not say that anything has happened.</p>
       </section>
+
+      <div className="flex flex-wrap items-center gap-3" data-configure-cta>
+        <Link to={`/red-team/configure?scenario=${encodeURIComponent(scenario.id)}`} className={buttonClasses('primary')}>Configure experiment</Link>
+        <p className="text-sm text-fg-subtle">Choose an agent, resources and a mode, then review. This does not start anything.</p>
+      </div>
 
       <section aria-labelledby="rt-d-exec" className="rt-neutral-panel flex gap-4 p-5" data-execution-note>
         <Ban className="mt-1 size-5 shrink-0 text-fg-muted" aria-hidden />

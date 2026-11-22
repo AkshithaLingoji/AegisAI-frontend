@@ -19,7 +19,7 @@ test('Red-Team Lab is reachable from the sidebar and explains itself honestly', 
   await expect(page.getByRole('list', { name: 'Attack categories' }).getByRole('listitem')).toHaveCount(7)
   const sections = page.getByRole('list', { name: 'Red-Team Lab sections' })
   await expect(sections.getByText('Upcoming')).toHaveCount(4)
-  await expect(sections.getByRole('link')).toHaveCount(2)
+  await expect(sections.getByRole('link')).toHaveCount(3)
   expect(await overflow(page)).toBeLessThanOrEqual(0)
   const a11y = await new AxeBuilder({ page }).analyze()
   expect(a11y.violations.map((v) => `${v.id}: ${v.nodes[0]?.html.slice(0, 120)}`)).toEqual([])
@@ -84,5 +84,78 @@ test.describe('Scenario Catalogue', () => {
     await link.focus()
     await page.keyboard.press('Enter')
     await expect(page).toHaveURL(/\/red-team\/scenarios\/demo-prompt-injection$/)
+  })
+})
+
+test.describe('Experiment configuration', () => {
+  test('Catalogue → Details → Configure → Review, accessible and without overflow', async ({ page }) => {
+    const errors: string[] = []
+    page.on('pageerror', (e) => errors.push(e.message))
+    page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+    const axe = async () => {
+      const r = await new AxeBuilder({ page }).analyze()
+      expect(r.violations.map((v) => `${v.id}: ${v.nodes[0]?.html.slice(0, 120)}`)).toEqual([])
+    }
+
+    await page.goto('/red-team/scenarios')
+    await page.getByRole('list', { name: 'Scenarios' }).getByRole('link', { name: /data sent to an unapproved destination/ }).click()
+    await expect(page.getByRole('heading', { level: 1, name: /data sent to an unapproved destination/ })).toBeVisible()
+    await page.locator('[data-configure-cta]').getByRole('link', { name: 'Configure experiment', exact: true }).click()
+    await expect(page).toHaveURL(/\/red-team\/configure\?scenario=demo-data-exfiltration$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Configure experiment' })).toBeVisible()
+    await expect(page.locator('[data-illustrative-note]')).toContainText('Illustrative data')
+    await expect(page.getByRole('radio', { name: /Paired Comparison/ })).toBeChecked()
+    await expect(page.locator('[data-paired-explainer]')).toBeVisible()
+    expect(await overflow(page)).toBeLessThanOrEqual(0)
+    await axe()
+
+    await page.getByRole('button', { name: 'Review configuration' }).click()
+    await expect(page.getByRole('alert')).toContainText('not complete yet')
+    await axe()
+
+    // The inputs are visually hidden; people click the card, so the test does too.
+    await page.locator('[data-agent="agent-finance"]').click()
+    await expect(page.getByRole('radio', { name: /Finance Agent/ })).toBeChecked()
+    await page.locator('[data-resource="fin-expenses-q3"]').click()
+    await page.locator('[data-resource="fin-payroll"]').click()
+    await expect(page.getByRole('checkbox', { name: /Payroll table/ })).toBeChecked()
+    await expect(page.locator('[data-resource-count]')).toContainText('2 of 9 selected')
+    expect(await overflow(page)).toBeLessThanOrEqual(0)
+    await axe()
+
+    await page.getByRole('button', { name: 'Review configuration' }).click()
+    await expect(page).toHaveURL(/\/red-team\/review\?/)
+    await expect(page.getByRole('heading', { level: 2, name: 'Configuration summary' })).toBeVisible()
+    await expect(page.locator('[data-summary="mode"]')).toContainText('Paired Comparison')
+    await expect(page.locator('[data-paired-review]')).toBeVisible()
+    await expect(page.locator('[data-execution-note]')).toContainText('Execution: not started')
+    await expect(page.locator('[data-warning="restricted"]')).toBeVisible()
+    await expect(page.getByRole('button', { name: /run|execute|start/i })).toHaveCount(0)
+    expect(await overflow(page)).toBeLessThanOrEqual(0)
+    await axe()
+
+    await page.locator('[data-edit-link]').click()
+    await expect(page).toHaveURL(/\/red-team\/configure\?/)
+    await expect(page.getByRole('radio', { name: /Finance Agent/ })).toBeChecked()
+    await expect(page.getByRole('checkbox', { name: /Payroll table/ })).toBeChecked()
+    expect(errors).toEqual([])
+  })
+
+  test('Baseline-only and Protected-only reviews are labelled and warn that nothing is compared', async ({ page }) => {
+    const base = '/red-team/review?scenario=demo-tool-misuse&agent=agent-finance&resource=fin-expenses-q3'
+    await page.goto(`${base}&mode=baseline`)
+    await expect(page.locator('[data-summary="mode"] [data-condition="baseline"]')).toBeVisible()
+    await expect(page.locator('[data-summary="mode"] [data-condition="protected"]')).toHaveCount(0)
+    await expect(page.locator('[data-warning="single-condition"]')).toBeVisible()
+    await page.goto(`${base}&mode=protected`)
+    await expect(page.locator('[data-summary="mode"] [data-condition="protected"]')).toBeVisible()
+    await expect(page.locator('[data-paired-review]')).toHaveCount(0)
+  })
+
+  test('an incomplete review link explains itself', async ({ page }) => {
+    await page.goto('/red-team/review?scenario=ghost')
+    await expect(page.locator('[data-review-incomplete]')).toContainText('not in the scenario catalogue')
+    await page.getByRole('link', { name: 'Back to configuration' }).click()
+    await expect(page).toHaveURL(/\/red-team\/configure\?/)
   })
 })

@@ -5,6 +5,8 @@ import { AgentOperationsPage } from '@/features/agent-operations/AgentOperations
 import { CommandCenterPage } from '@/features/command-center/CommandCenterPage'
 import { RedTeamLayout } from '@/features/red-team/RedTeamLayout'
 import { RedTeamOverviewPage } from '@/features/red-team/RedTeamOverviewPage'
+import { ExperimentConfigurePage } from '@/features/red-team/ExperimentConfigurePage'
+import { ExperimentReviewPage } from '@/features/red-team/ExperimentReviewPage'
 import { ScenarioCataloguePage } from '@/features/red-team/ScenarioCataloguePage'
 import { ScenarioDetailPage } from '@/features/red-team/ScenarioDetailPage'
 import { GuidedTasksPage } from '@/features/guided-tasks/GuidedTasksPage'
@@ -24,6 +26,8 @@ export const routes: RouteObject[] = [
           { index: true, element: <RedTeamOverviewPage /> },
           { path: 'scenarios', element: <ScenarioCataloguePage /> },
           { path: 'scenarios/:scenarioId', element: <ScenarioDetailPage /> },
+          { path: 'configure', element: <ExperimentConfigurePage /> },
+          { path: 'review', element: <ExperimentReviewPage /> },
         ],
       },
       { path: 'agents', element: <AgentOperationsPage /> },

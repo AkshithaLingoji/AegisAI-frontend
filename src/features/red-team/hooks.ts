@@ -16,3 +16,19 @@ export function useRedTeamExecutions() {
 export function useRedTeamScenario(scenarioId: string) {
   return useQuery({ queryKey: [...key('scenario'), scenarioId], queryFn: () => services.redTeam.getScenario(scenarioId), retry: false })
 }
+
+/**
+ * What the configuration screens need beyond scenarios: the existing agent, resource and
+ * tool services. If any is unavailable (e.g. the backend is not connected) the query fails
+ * as a whole and the page shows that; nothing is substituted.
+ */
+export function useExperimentOptions() {
+  return useQuery({
+    queryKey: key('configuration-options'),
+    queryFn: async () => {
+      const [agents, resources, tools] = await Promise.all([services.agents.listAgents(), services.resources.listResources(), services.agents.listTools()])
+      return { agents, resources, tools }
+    },
+    retry: false,
+  })
+}

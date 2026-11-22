@@ -134,6 +134,24 @@ describe('mock services', () => {
   })
 })
 
+describe('agent definitions', () => {
+  // Capabilities describe what an agent is built to do; tools are what it is assigned. Authorization is separate
+  // (see principals), so this only guards that every assigned kind of tool is described, not that it is permitted.
+  const describes: Record<string, RegExp> = { read: /read/i, write: /save|write/i, export: /export/i, transfer: /move|transfer/i }
+  it('describes every kind of tool an agent is assigned in its capabilities', async () => {
+    const svc = createMockServices()
+    const [agents, tools] = await Promise.all([svc.agents.listAgents(), svc.agents.listTools()])
+    for (const agent of agents) {
+      const kinds = new Set(tools.filter((t) => t.agentId === agent.id).map((t) => t.actionKind))
+      for (const kind of kinds) {
+        const pattern = describes[kind]
+        expect(pattern, `no description pattern for action kind “${kind}”`).toBeDefined()
+        expect(agent.capabilities?.some((c) => pattern!.test(c)), `${agent.id} has a ${kind} tool but no matching capability`).toBe(true)
+      }
+    }
+  })
+})
+
 describe('backend adapters', () => {
   it('reject every service with NotConnectedError — never serve mock data', async () => {
     const svc = createBackendServices({})

@@ -66,14 +66,14 @@ describe('overview in mock mode', () => {
     expect(main.textContent).not.toMatch(/\d+\s*(%|passed|blocked|successful|attacks? (blocked|detected))/i)
   })
 
-  it('lists the lab sections: Overview and the Catalogue are linked, the rest are upcoming and not links', async () => {
+  it('lists the lab sections: Overview, the Catalogue and Configuration are linked, the rest are upcoming and not links', async () => {
     renderAt('/red-team')
     const sections = await screen.findByRole('list', { name: 'Red-Team Lab sections' })
     const items = within(sections).getAllByRole('listitem')
-    expect(items.map((i) => i.getAttribute('data-lab-section'))).toEqual(['overview', 'catalogue', 'execution', 'results', 'evidence', 'reports'])
-    expect(items.filter((i) => i.getAttribute('data-status') === 'available').map((i) => i.getAttribute('data-lab-section'))).toEqual(['overview', 'catalogue'])
+    expect(items.map((i) => i.getAttribute('data-lab-section'))).toEqual(['overview', 'catalogue', 'configuration', 'execution', 'results', 'evidence', 'reports'])
+    expect(items.filter((i) => i.getAttribute('data-status') === 'available').map((i) => i.getAttribute('data-lab-section'))).toEqual(['overview', 'catalogue', 'configuration'])
     expect(within(sections).getAllByText('Upcoming')).toHaveLength(4)
-    expect(within(sections).getAllByRole('link').map((l) => l.getAttribute('href'))).toEqual(['/red-team', '/red-team/scenarios'])
+    expect(within(sections).getAllByRole('link').map((l) => l.getAttribute('href'))).toEqual(['/red-team', '/red-team/scenarios', '/red-team/configure'])
     expect(within(sections).queryAllByRole('button')).toHaveLength(0)
     for (const i of items.filter((x) => x.getAttribute('data-status') === 'upcoming')) expect(within(i).queryAllByRole('link')).toHaveLength(0)
   })
