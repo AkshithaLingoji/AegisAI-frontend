@@ -97,3 +97,11 @@ All **PROVISIONAL**; none is a backend contract.
 - **`RunServiceError`** — `code` (`invalid-input` | `invalid-request` | `unknown-run` | `unknown-approval-request` | `already-resolved` | `conflict`), `message`, `issues[]`.
 - **Catalogue inputs.** Catalogue tasks now carry the documents the scripted agent retrieves as `TaskInput`s with catalogue-assigned trust (FIN-02's document is `untrusted`, the others `declared-trusted` by the demonstration data). The seeded experiments are unchanged (golden digest guard).
 - **Controlled definitions.** The mock service starts catalogue runs from its own definition, never the caller's copy, and fixes the agent and simulated identity of custom tasks from the chosen script.
+
+## Added in the Red-Team Lab foundation (Patch 3)
+
+All **PROVISIONAL**; none is the Red-Team backend's schema. See `docs/RED-TEAM-LAB.md`.
+
+- **`src/domain/redTeam.ts`**: scenario, request, execution status (lifecycle), attack outcome (`evaluated` with four independent findings | `unknown` | `infrastructure_failure`), evidence, report and connection-status types.
+- **`RedTeamService`** and **`RedTeamServiceError`** (`not-supported`, `not-found`, `not-available`, `invalid-data`).
+- **`src/services/redTeam/transport.ts`**: a guess at backend JSON (`scenario_id`, `category`, `description`, `input`, `expected_behavior`, ...). Confirm every name.

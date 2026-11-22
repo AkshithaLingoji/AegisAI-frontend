@@ -47,7 +47,7 @@ test('desktop: sidebar lists real modules as links and planned ones as disabled'
   await page.goto('/design-system')
   const nav = page.getByRole('navigation', { name: 'Primary' })
   await expect(nav).toBeVisible()
-  await expect(nav.getByRole('link')).toHaveCount(4)
+  await expect(nav.getByRole('link')).toHaveCount(5)
   await expect(nav.getByRole('link', { name: 'Design system' })).toHaveAttribute('aria-current', 'page')
   await expect(nav.getByRole('link', { name: /Assurance/ })).toHaveCount(0)
   await expect(nav.getByText('Assurance & Policy')).toBeVisible()

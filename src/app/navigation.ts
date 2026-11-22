@@ -29,7 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'guided-tasks', label: 'Guided Tasks', icon: Route, tone: 'mint', to: '/tasks' },
   { id: 'agent-operations', label: 'Agent Operations', icon: Bot, tone: 'sky', to: '/agents' },
   { id: 'assurance-policy', label: 'Assurance & Policy', icon: ShieldCheck, tone: 'mint', plannedPhase: 4 },
-  { id: 'red-team-lab', label: 'Red-Team Lab', icon: FlaskConical, tone: 'rose', plannedPhase: 5 },
+  { id: 'red-team-lab', label: 'Red-Team Lab', icon: FlaskConical, tone: 'rose', to: '/red-team' },
   { id: 'audit-incident', label: 'Audit & Incidents', icon: ScrollText, tone: 'peach', plannedPhase: 6 },
   { id: 'research-benchmark', label: 'Research & Benchmarks', icon: Gauge, tone: 'sky', plannedPhase: 7 },
   { id: 'configuration', label: 'Configuration', icon: Settings, tone: 'neutral', plannedPhase: 8 },

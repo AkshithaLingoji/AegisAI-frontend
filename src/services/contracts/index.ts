@@ -1,6 +1,7 @@
 import type { AgentsService } from './agents'
 import type { AuditService } from './audit'
 import type { ExperimentsService } from './experiments'
+import type { RedTeamService } from './redTeam'
 import type { ResourcesService } from './resources'
 import type { ScenariosService } from './scenarios'
 import type { RunsService, TasksService } from './tasks'
@@ -10,6 +11,7 @@ export * from './agents'
 export * from './audit'
 export * from './errors'
 export * from './experiments'
+export * from './redTeam'
 export * from './resources'
 export * from './scenarios'
 export * from './system'
@@ -28,4 +30,5 @@ export interface AegisServices {
   audit: AuditService
   tasks: TasksService
   runs: RunsService
+  redTeam: RedTeamService
 }

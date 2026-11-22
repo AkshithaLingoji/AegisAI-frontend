@@ -139,3 +139,6 @@ Simulation profiles and scripted plans; the demo policy rules (`evaluateDemoRule
 - `listSimulationScenarios()` has no backend equivalent: when it rejects, the UI disables the custom-task path and says why. A real backend would need its own way to choose behaviour for custom tasks (open question for the backend teammate).
 - Catalogue and custom runs are started on the Protected path only; no Baseline run is started from this UI.
 - Session history is the mock's in-memory map; a backend must say who owns run history and for how long.
+
+### Red-Team Lab (Patch 3)
+The Red-Team Lab frontend foundation adds a `redTeam` service (see `docs/RED-TEAM-LAB.md`). The backend adapter reports "not connected" and rejects every operation with `NotConnectedError`; nothing is invented about the Red-Team backend's endpoints, and the mock has no runner or evaluator. Backend-side mapping lives in `src/services/redTeam/mapping.ts`.

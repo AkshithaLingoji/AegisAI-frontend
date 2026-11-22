@@ -1,5 +1,6 @@
 import type { AegisServices } from '../contracts'
 import { notConnected } from './notConnected'
+import { createBackendRedTeamService } from './redTeam'
 import { createBackendSystemService, type BackendOptions } from './system'
 
 /** Backend adapters. Private to the service layer — import via `@/services`. */
@@ -13,6 +14,7 @@ export function createBackendServices(options: BackendOptions): AegisServices {
     experiments: { listExperiments: nc('experiments') },
     audit: { listAuditRecords: nc('audit records') },
     tasks: { listTasks: nc('guided tasks'), listSimulationScenarios: nc('simulation scenarios') },
+    redTeam: createBackendRedTeamService(options),
     runs: { startRun: nc('runs'), resolveApproval: nc('approvals'), getRun: nc('runs'), listRuns: nc('runs') },
   }
 }

@@ -51,3 +51,15 @@ test.describe('Guided Tasks with backend selected', () => {
     await expect(page.getByText(/does not substitute mock data/)).toBeVisible()
   })
 })
+
+test.describe('Red-Team Lab with backend selected', () => {
+  test('says the backend is not connected and shows no demonstration data', async ({ page }) => {
+    await page.goto('/red-team')
+    await expect(page.locator('[data-connection-state="not_connected"]').getByText('BACKEND NOT CONNECTED')).toBeVisible()
+    await expect(page.getByText('CONNECTED BACKEND')).toHaveCount(0)
+    await expect(page.getByText('MOCK / DEVELOPMENT').first()).toBeHidden()
+    await expect(page.getByText(/illustrative/i)).toHaveCount(0)
+    await expect(page.getByText(/Unavailable\./)).toHaveCount(2)
+    await expect(page.getByText(/does not substitute mock data/).first()).toBeVisible()
+  })
+})

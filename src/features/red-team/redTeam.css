@@ -1,0 +1,109 @@
+/*
+  Red-Team Lab: page-scoped dark security-lab theme (presentation only).
+
+  Everything here is scoped to `.rt-lab`, the wrapper rendered by RedTeamOverviewPage.
+  It re-points the design-token custom properties for descendants of that wrapper only,
+  so the shared Card/Badge/StatePanel components pick up the look without being changed,
+  and nothing outside the wrapper (sidebar, header, other pages) is affected.
+  Global tokens in src/styles/index.css are untouched.
+
+  Colour roles: crimson = lab identity and critical emphasis (never a status colour);
+  amber = caution / not connected / demonstration data; green = available / healthy;
+  grey = neutral, unavailable, upcoming.
+*/
+.rt-lab {
+  --rt-crimson: #d9364f; /* primary crimson: bars and borders (non-text) */
+  --rt-crimson-text: #f0687d; /* lightened for text; >= 4.5:1 on the surfaces below */
+  --rt-crimson-deep: #8f1d35;
+  --rt-crimson-surface: #351a25;
+
+  --color-canvas: #101114;
+  --color-surface: #191a20;
+  --color-raised: #202128;
+  --color-overlay: #26272f;
+  --color-line: #34343d;
+  --color-line-strong: #46464f;
+  --color-fg: #f5f4f5;
+  --color-fg-muted: #aaa9b1;
+  --color-fg-subtle: #9b9aa3;
+
+  /* The page accent (eyebrow, accent badges) becomes crimson; caution becomes a clear amber. */
+  --color-lavender: var(--rt-crimson-text);
+  --color-peach: #e8b04a;
+  --color-mint: #6fcf97;
+
+  /* Flat, serious cards: smaller radius, no inset highlight or drop shadow. */
+  --radius-card: 0.875rem;
+  --shadow-card: none;
+
+  background-color: var(--color-canvas);
+  border: 1px solid var(--color-line);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  color: var(--color-fg);
+  /* Never let content push the panel wider than its column. */
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 40rem) {
+  .rt-lab {
+    padding: 2.5rem;
+  }
+}
+
+/* Connection card: a left edge that mirrors the reported state, never implying more than it reports. */
+.rt-lab [data-connection-state] {
+  border-left: 3px solid var(--color-line-strong);
+}
+.rt-lab [data-connection-state='connected'] {
+  border-left-color: var(--color-mint);
+}
+.rt-lab [data-connection-state='mock'],
+.rt-lab [data-connection-state='not_connected'],
+.rt-lab [data-connection-state='unreachable'] {
+  border-left-color: var(--color-peach);
+}
+
+/* Section headings carry a small crimson marker. */
+.rt-lab .rt-heading-mark {
+  display: inline-block;
+  width: 0.25rem;
+  height: 1.25rem;
+  flex: none;
+  border-radius: 9999px;
+  background-color: var(--rt-crimson);
+}
+
+/* The "separate experimental subsystem" note. */
+.rt-lab .rt-note {
+  border: 1px solid var(--rt-crimson-deep);
+  border-left-width: 3px;
+  border-left-color: var(--rt-crimson);
+  border-radius: 0.75rem;
+  background-color: var(--rt-crimson-surface);
+  padding: 1rem 1.25rem;
+  color: var(--color-fg);
+}
+.rt-lab .rt-note strong {
+  color: var(--color-fg);
+}
+
+/* Categories: flat panels with a crimson edge. */
+.rt-lab .rt-category {
+  border: 1px solid var(--color-line);
+  border-left: 3px solid var(--rt-crimson);
+  border-radius: 0.75rem;
+  background-color: var(--color-surface);
+  padding: 1rem 1.25rem;
+}
+
+/* Lab sections: available = solid panel; upcoming = dashed outline, no fill, so it never looks operational. */
+.rt-lab .rt-section {
+  border: 1px solid var(--color-line);
+  border-radius: 0.75rem;
+  background-color: var(--color-surface);
+}
+.rt-lab .rt-section[data-status='upcoming'] {
+  border-style: dashed;
+  background-color: transparent;
+}

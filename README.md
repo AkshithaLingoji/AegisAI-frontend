@@ -61,6 +61,7 @@ src/
                   command-center/   overview of runs and outcomes    (Phase 2)
                   agent-operations/ agents, tools, resources, tasks  (Phase 3)
                   guided-tasks/     guided workflow at /tasks        (Patch 2)
+                  red-team/         Red-Team Lab overview at /red-team (Patch 3, foundation only)
                   assurance/        policies, context, decisions     (Phase 4)
   app/          router, providers, navigation
   config/       env parsing

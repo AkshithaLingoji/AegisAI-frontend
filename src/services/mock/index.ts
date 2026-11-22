@@ -1,6 +1,7 @@
 import type { AegisServices } from '../contracts'
 import { agents, principals, resources, scenarioFixtures, tools } from './engine/fixtures'
 import { deriveAuditRecords, seededExperiments } from './engine/seed'
+import { createMockRedTeamService } from './redTeam'
 import { createMockTaskServices } from './runs'
 import { createMockSystemService } from './system'
 
@@ -25,6 +26,7 @@ export function createMockServices({ latencyMs = 0, now }: MockOptions = {}): Ae
     resources: { listResources: serve(() => resources) },
     experiments: { listExperiments: serve(() => seededExperiments()) },
     audit: { listAuditRecords: serve(() => deriveAuditRecords(seededExperiments())) },
+    redTeam: createMockRedTeamService({ latencyMs }),
     ...createMockTaskServices({ latencyMs, ...(now ? { now } : {}) }),
   }
 }
