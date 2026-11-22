@@ -4,11 +4,13 @@ export interface LabSection {
   description: string
   /** `available` only when a real page exists. Everything else is shown as upcoming and is not linked. */
   status: 'available' | 'upcoming'
+  /** Route of the page; only meaningful (and only used) when `status` is `available`. */
+  to?: string
 }
 
 export const LAB_SECTIONS: LabSection[] = [
-  { id: 'overview', label: 'Overview', description: 'What the lab is for and whether anything is connected. You are here.', status: 'available' },
-  { id: 'catalogue', label: 'Scenario Catalogue', description: 'Browse the adversarial scenarios by category.', status: 'upcoming' },
+  { id: 'overview', label: 'Overview', description: 'What the lab is for and whether anything is connected.', status: 'available', to: '/red-team' },
+  { id: 'catalogue', label: 'Scenario Catalogue', description: 'Browse, search and inspect the adversarial scenarios. Nothing here runs them.', status: 'available', to: '/red-team/scenarios' },
   { id: 'execution', label: 'Execution', description: 'Start a scenario and follow its progress.', status: 'upcoming' },
   { id: 'results', label: 'Results and Evaluation', description: 'See whether each attack was attempted, detected, blocked or successful.', status: 'upcoming' },
   { id: 'evidence', label: 'Evidence', description: 'Inspect the records behind a result.', status: 'upcoming' },

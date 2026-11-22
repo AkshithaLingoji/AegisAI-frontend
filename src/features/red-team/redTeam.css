@@ -13,7 +13,7 @@
 */
 .rt-lab {
   --rt-crimson: #d9364f; /* primary crimson: bars and borders (non-text) */
-  --rt-crimson-text: #f0687d; /* lightened for text; >= 4.5:1 on the surfaces below */
+  --rt-crimson-text: #f47f91; /* lightened for text; >= 4.5:1 on the surfaces and on the crimson-tinted badge */
   --rt-crimson-deep: #8f1d35;
   --rt-crimson-surface: #351a25;
 
@@ -106,4 +106,147 @@
 .rt-lab .rt-section[data-status='upcoming'] {
   border-style: dashed;
   background-color: transparent;
+}
+
+/* ---- Scenario catalogue (still scoped to .rt-lab) ---- */
+
+.rt-lab .rt-subnav-link {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  border: 1px solid var(--color-line);
+  border-radius: 0.625rem;
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-fg-muted);
+}
+.rt-lab .rt-subnav-link:hover {
+  color: var(--color-fg);
+  border-color: var(--color-line-strong);
+}
+.rt-lab .rt-subnav-link-active {
+  color: var(--color-fg);
+  background-color: var(--color-raised);
+  border-color: var(--rt-crimson);
+}
+
+.rt-lab .rt-input {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 0.625rem;
+  background-color: var(--color-surface);
+  padding: 0 1rem 0 2.5rem;
+  font-size: 0.875rem;
+  color: var(--color-fg);
+}
+.rt-lab .rt-input::placeholder {
+  color: var(--color-fg-subtle);
+}
+
+.rt-lab .rt-chip {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 9999px;
+  background-color: var(--color-surface);
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+}
+.rt-lab .rt-chip:hover {
+  color: var(--color-fg);
+  background-color: var(--color-raised);
+}
+.rt-lab .rt-chip-active {
+  color: var(--color-fg);
+  background-color: var(--rt-crimson-surface);
+  border-color: var(--rt-crimson);
+}
+.rt-lab .rt-chip-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-fg-subtle);
+}
+.rt-lab .rt-chip-active .rt-chip-count {
+  color: var(--color-fg);
+}
+
+/* Scenario card: one link, stretched over the whole card. */
+.rt-lab .rt-card {
+  position: relative;
+  border: 1px solid var(--color-line);
+  border-radius: 0.875rem;
+  background-color: var(--color-surface);
+  padding: 1.25rem;
+  min-width: 0;
+}
+.rt-lab .rt-card:hover {
+  border-color: var(--color-line-strong);
+  background-color: var(--color-raised);
+}
+.rt-lab .rt-card:focus-within {
+  outline: 2px solid var(--color-sky);
+  outline-offset: 2px;
+}
+.rt-lab .rt-card-link {
+  outline: none;
+}
+.rt-lab .rt-card-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+/* Expected behaviour is a specification: dashed and recessed, never styled like a result. */
+.rt-lab .rt-spec {
+  border: 1px dashed var(--color-line-strong);
+  border-radius: 0.75rem;
+  background-color: transparent;
+  padding: 0.75rem 1rem;
+}
+section.rt-spec {
+  padding: 1.25rem;
+}
+
+.rt-lab .rt-neutral-panel {
+  border: 1px solid var(--color-line);
+  border-radius: 0.75rem;
+  background-color: var(--color-surface);
+}
+
+.rt-lab .rt-pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--color-line);
+  border-radius: 0.75rem;
+  background-color: var(--color-surface);
+  padding: 1rem 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--color-fg);
+}
+
+.rt-lab .rt-back {
+  color: var(--rt-crimson-text);
+}
+.rt-lab .rt-back:hover {
+  text-decoration: underline;
+}
+
+/* The shared error panel uses a pastel peach wash that is too light for this theme's grey text; use a dark amber surface instead. */
+.rt-lab [data-state-variant='error'] {
+  background-image: none;
+  background-color: #2b2316;
+  border-color: color-mix(in srgb, var(--color-peach) 55%, transparent);
+}
+.rt-lab [data-state-variant='error'] p {
+  color: var(--color-fg);
 }

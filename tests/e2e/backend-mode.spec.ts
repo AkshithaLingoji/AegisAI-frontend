@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
 /**
@@ -61,5 +62,19 @@ test.describe('Red-Team Lab with backend selected', () => {
     await expect(page.getByText(/illustrative/i)).toHaveCount(0)
     await expect(page.getByText(/Unavailable\./)).toHaveCount(2)
     await expect(page.getByText(/does not substitute mock data/).first()).toBeVisible()
+  })
+
+  test('the Scenario Catalogue says the backend is not connected and shows no scenarios', async ({ page }) => {
+    await page.goto('/red-team/scenarios')
+    await expect(page.locator('[data-catalogue-state="backend-unavailable"]')).toContainText('the backend is not connected')
+    await expect(page.locator('[data-catalogue-state="backend-unavailable"]')).toContainText('no demonstration data is shown')
+    await expect(page.getByRole('list', { name: 'Scenarios' })).toHaveCount(0)
+    await expect(page.getByText(/Demo:/)).toHaveCount(0)
+    await expect(page.getByText('Mock demonstration data')).toHaveCount(0)
+    const a11y = await new AxeBuilder({ page }).analyze()
+    expect(a11y.violations.map((v) => `${v.id}: ${v.nodes[0]?.html.slice(0, 120)}`)).toEqual([])
+    await page.goto('/red-team/scenarios/demo-prompt-injection')
+    await expect(page.locator('[data-catalogue-state="backend-unavailable"]')).toBeVisible()
+    await expect(page.getByText(/Demo:/)).toHaveCount(0)
   })
 })

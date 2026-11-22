@@ -142,3 +142,4 @@ Simulation profiles and scripted plans; the demo policy rules (`evaluateDemoRule
 
 ### Red-Team Lab (Patch 3)
 The Red-Team Lab frontend foundation adds a `redTeam` service (see `docs/RED-TEAM-LAB.md`). The backend adapter reports "not connected" and rejects every operation with `NotConnectedError`; nothing is invented about the Red-Team backend's endpoints, and the mock has no runner or evaluator. Backend-side mapping lives in `src/services/redTeam/mapping.ts`.
+The Scenario Catalogue (`/red-team/scenarios`) reads scenarios only through `services.redTeam.listScenarios()` and `getScenario()`. In backend mode it shows "backend not connected" and never falls back to mock data. When the real backend adapter exists, only `src/services/backend/redTeam.ts` and the mapping should change.

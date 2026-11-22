@@ -13,3 +13,6 @@ export function useRedTeamScenarios() {
 export function useRedTeamExecutions() {
   return useQuery({ queryKey: key('executions'), queryFn: () => services.redTeam.listExecutions(), retry: false })
 }
+export function useRedTeamScenario(scenarioId: string) {
+  return useQuery({ queryKey: [...key('scenario'), scenarioId], queryFn: () => services.redTeam.getScenario(scenarioId), retry: false })
+}

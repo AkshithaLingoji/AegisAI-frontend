@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { createMemoryRouter, RouterProvider } from 'react-router-dom'
+import { MemoryRouter, createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders, queryClient } from '@/app/providers'
 import { routes } from '@/app/routes'
@@ -66,15 +66,16 @@ describe('overview in mock mode', () => {
     expect(main.textContent).not.toMatch(/\d+\s*(%|passed|blocked|successful|attacks? (blocked|detected))/i)
   })
 
-  it('lists the lab sections: only Overview is available, the rest are upcoming and not links', async () => {
+  it('lists the lab sections: Overview and the Catalogue are linked, the rest are upcoming and not links', async () => {
     renderAt('/red-team')
     const sections = await screen.findByRole('list', { name: 'Red-Team Lab sections' })
     const items = within(sections).getAllByRole('listitem')
     expect(items.map((i) => i.getAttribute('data-lab-section'))).toEqual(['overview', 'catalogue', 'execution', 'results', 'evidence', 'reports'])
-    expect(items.filter((i) => i.getAttribute('data-status') === 'available')).toHaveLength(1)
-    expect(within(sections).getAllByText('Upcoming')).toHaveLength(5)
-    expect(within(sections).queryAllByRole('link')).toHaveLength(0)
+    expect(items.filter((i) => i.getAttribute('data-status') === 'available').map((i) => i.getAttribute('data-lab-section'))).toEqual(['overview', 'catalogue'])
+    expect(within(sections).getAllByText('Upcoming')).toHaveLength(4)
+    expect(within(sections).getAllByRole('link').map((l) => l.getAttribute('href'))).toEqual(['/red-team', '/red-team/scenarios'])
     expect(within(sections).queryAllByRole('button')).toHaveLength(0)
+    for (const i of items.filter((x) => x.getAttribute('data-status') === 'upcoming')) expect(within(i).queryAllByRole('link')).toHaveLength(0)
   })
 
   it('shows a loading state first', async () => {
@@ -136,8 +137,13 @@ describe('presentation components are data-driven', () => {
     expect(categoryLabel('something_new')).toBe('something_new')
   })
 
-  it('never links an upcoming section', () => {
-    render(<LabSections sections={LAB_SECTIONS} />)
-    expect(screen.queryAllByRole('link')).toHaveLength(0)
+  it('links only available sections and never an upcoming one', () => {
+    render(
+      <MemoryRouter>
+        <LabSections sections={LAB_SECTIONS} />
+      </MemoryRouter>,
+    )
+    expect(screen.getAllByRole('link')).toHaveLength(LAB_SECTIONS.filter((s) => s.status === 'available').length)
+    expect(LAB_SECTIONS.filter((s) => s.status === 'upcoming').every((s) => !s.to)).toBe(true)
   })
 })

@@ -11,6 +11,8 @@ export const PLANNED_CATEGORIES: ScenarioCategory[] = [
   { id: 'prompt_injection', label: 'Prompt injection', description: 'Instructions hidden in content an agent reads, trying to redirect what it does.' },
   { id: 'tool_misuse', label: 'Tool misuse', description: 'Getting an agent to use a legitimate tool for a purpose it was not provided for.' },
   { id: 'privilege_escalation', label: 'Privilege escalation', description: 'Getting an agent to act with more authority than the user it serves.' },
+  { id: 'data_exfiltration', label: 'Data exfiltration', description: 'Getting an agent to send information somewhere it should not go.' },
+  { id: 'unauthorized_action', label: 'Unauthorized actions', description: 'Getting an agent to carry out an action without the approval or permission it requires.' },
   { id: 'context_manipulation', label: 'Context and intent manipulation', description: 'Distorting what an agent believes about the situation or the user’s real intent.' },
   { id: 'execution_reliability', label: 'Execution and reliability attacks', description: 'Provoking failures, loops or unsafe states in how actions are carried out.' },
 ]

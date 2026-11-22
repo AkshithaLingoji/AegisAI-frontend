@@ -4,7 +4,6 @@ import { ConnectionPanel } from './components/ConnectionPanel'
 import { LabSections } from './components/LabSections'
 import { LAB_SECTIONS } from './data/labSections'
 import { PLANNED_CATEGORIES } from './data/plannedCategories'
-import './redTeam.css'
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
@@ -21,7 +20,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
 /** Overview only: no scenarios are run here, and no statistic is shown that was not reported by a source. */
 export function RedTeamOverviewPage() {
   return (
-    <div className="rt-lab space-y-12">
+    <div className="space-y-12">
       <PageHeader
         eyebrow="Red-Team Lab"
         title="Red-Team Lab"
